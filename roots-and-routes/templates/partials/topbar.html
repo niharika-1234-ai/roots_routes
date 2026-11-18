@@ -1,0 +1,34 @@
+<header class="dashboard-topbar">
+  <div class="topbar-title">
+    <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="app-sidebar" data-sidebar-toggle>
+      <span></span><span></span><span></span>
+    </button>
+    <div>
+      <p class="topbar-overline">ROOTS &amp; ROUTES <span>/</span> YOUR SPACE</p>
+      <h1>{{ page_title }}</h1>
+    </div>
+  </div>
+  <div class="topbar-tools">
+    <form class="global-search" action="{{ url_for('web.workspace', slug='explore-destinations') }}" method="get" role="search" data-global-search>
+      <button class="global-search-toggle" type="button" aria-label="Focus destination search" data-search-toggle>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+      </button>
+      <input type="search" name="q" value="{{ query|default('') }}" placeholder="Search destinations..." aria-label="Search destinations">
+      <kbd>↵</kbd>
+    </form>
+    <div class="notification-wrap">
+      <button class="icon-button notification-button" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="notification-panel" data-notification-toggle>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+      </button>
+      <div class="notification-panel" id="notification-panel" hidden>
+        <strong>You’re all caught up</strong>
+        <p>Travel updates and saved-trip reminders will appear here.</p>
+      </div>
+    </div>
+    <a class="topbar-profile" href="{{ url_for('web.workspace', slug='profile') }}" aria-label="Open profile for {{ user.full_name }}">
+      <span class="avatar">{{ user.full_name[:1]|upper }}</span>
+      <span class="topbar-profile-copy"><strong>{{ user.full_name }}</strong><small>Traveller</small></span>
+      <span class="profile-chevron" aria-hidden="true">⌄</span>
+    </a>
+  </div>
+</header>

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ form_title }} · ROOTS &amp; ROUTES{% endblock %}
+{% block body_class %}dashboard-body{% endblock %}
+{% block header %}{% endblock %}
+
+{% block content %}
+  <div class="dashboard-shell">
+    {% include "partials/sidebar.html" %}
+    <div class="dashboard-main">
+      {% set page_title = "Community administration" %}
+      {% include "partials/topbar.html" %}
+
+      <div class="dashboard-content workspace-content">
+        <section class="workspace-intro">
+          <div>
+            <p class="eyebrow">PROVIDER DIRECTORY</p>
+            <h2>{{ form_title }}</h2>
+            <p>Record only details that have been reviewed. Draft listings stay private until published.</p>
+          </div>
+          <a class="text-link" href="{{ url_for('web.community_admin') }}">Back to administration <span aria-hidden="true">→</span></a>
+        </section>
+
+        <section class="workspace-panel community-provider-edit-panel">
+          <form method="post"
+                action="{{ url_for('web.community_provider_edit', provider_id=provider_id) if provider_id else url_for('web.community_provider_new') }}"
+                class="community-provider-edit-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="community-form-section">
+              <p class="eyebrow">PROFILE DETAILS</p>
+              <div class="community-form-grid">
+                <div class="community-form-field">
+                  <label for="provider-name">Provider / group name</label>
+                  <input id="provider-name" name="name" maxlength="120" value="{{ provider_form.get('name', '') }}" required>
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-category">Experience type</label>
+                  <select id="provider-category" name="category" required>
+                    <option value="">Choose a type</option>
+                    {% for category_id, category_label in community_categories %}
+                      <option value="{{ category_id }}" {% if provider_form.get('category') == category_id %}selected{% endif %}>{{ category_label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-experience">Experience</label>
+                  <input id="provider-experience" name="experience" maxlength="180" value="{{ provider_form.get('experience', '') }}" placeholder="For example: years of practice or guiding experience" required>
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-location">Location</label>
+                  <input id="provider-location" name="location" maxlength="180" value="{{ provider_form.get('location', '') }}" placeholder="Village / town, district" required>
+                </div>
+                <div class="community-form-field community-form-field-wide">
+                  <label for="provider-description">Description</label>
+                  <textarea id="provider-description" name="description" rows="5" maxlength="2000" required>{{ provider_form.get('description', '') }}</textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="community-form-section">
+              <p class="eyebrow">IMAGE &amp; LISTING PROVENANCE</p>
+              <div class="community-form-grid">
+                <div class="community-form-field">
+                  <label for="provider-image">Image URL (optional)</label>
+                  <input id="provider-image" type="url" name="image_url" value="{{ provider_form.get('image_url', '') }}" placeholder="https://…">
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-image-source">Image source URL</label>
+                  <input id="provider-image-source" type="url" name="image_source_url" value="{{ provider_form.get('image_source_url', '') }}" placeholder="Required when an image is supplied">
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-image-attribution">Image attribution</label>
+                  <input id="provider-image-attribution" name="image_attribution" maxlength="160" value="{{ provider_form.get('image_attribution', '') }}" placeholder="Photographer or rights holder">
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-listing-source">Listing information source URL</label>
+                  <input id="provider-listing-source" type="url" name="listing_source_url" value="{{ provider_form.get('listing_source_url', '') }}" placeholder="https://…" >
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-verified-on">Listing review date</label>
+                  <input id="provider-verified-on" type="date" name="verified_on" value="{{ provider_form.get('verified_on', '') }}">
+                </div>
+              </div>
+              <p class="community-form-help">Publishing requires a valid HTTPS listing source and review date. Images require their own HTTPS source and attribution.</p>
+            </div>
+
+            <div class="community-form-section">
+              <p class="eyebrow">OPTIONAL VERIFIED CONTACT</p>
+              <div class="community-form-grid">
+                <div class="community-form-field">
+                  <label for="provider-phone">Contact phone</label>
+                  <input id="provider-phone" type="tel" name="contact_phone" maxlength="30" value="{{ provider_form.get('contact_phone', '') }}">
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-email">Contact email</label>
+                  <input id="provider-email" type="email" name="contact_email" maxlength="254" value="{{ provider_form.get('contact_email', '') }}">
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-contact-source">Contact verification source URL</label>
+                  <input id="provider-contact-source" type="url" name="contact_source_url" value="{{ provider_form.get('contact_source_url', '') }}" placeholder="https://…">
+                </div>
+                <div class="community-form-field">
+                  <label for="provider-contact-verified-on">Contact verification date</label>
+                  <input id="provider-contact-verified-on" type="date" name="contact_verified_on" value="{{ provider_form.get('contact_verified_on', '') }}">
+                </div>
+              </div>
+              <label class="community-checkbox-label">
+                <input type="checkbox" name="contact_verified" value="on" {% if provider_form.get('contact_verified') in ['on', '1', 1, true] %}checked{% endif %}>
+                I verified this contact information using the source above and have permission to publish it.
+              </label>
+              <p class="community-form-help">Contact fields are rejected unless verified with a source and date. Unverified contact details are never shown publicly.</p>
+            </div>
+
+            <div class="community-form-section community-publish-section">
+              <label class="community-checkbox-label">
+                <input type="checkbox" name="is_published" value="on" {% if provider_form.get('is_published') in ['on', '1', 1, true] %}checked{% endif %}>
+                Publish this listing in the community directory
+              </label>
+            </div>
+
+            <div class="community-form-actions">
+              <button class="button button-green" type="submit">Save listing</button>
+              <a class="button button-outline" href="{{ url_for('web.community_admin') }}">Cancel</a>
+            </div>
+          </form>
+        </section>
+
+        <footer class="dashboard-footer">
+          <span>ROOTS &amp; ROUTES <span aria-hidden="true">·</span> Community stewardship.</span>
+          <span>Unpublishing keeps the record and enquiry history for administration.</span>
+        </footer>
+      </div>
+    </div>
+  </div>
+{% endblock %}

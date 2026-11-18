@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% set registering = mode == "register" %}
+{% block title %}{{ "Create your account" if registering else "Sign in" }} · ROOTS &amp; ROUTES{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+{% block header %}{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+  <section class="auth-shell">
+    <div class="auth-story">
+      <a class="auth-brand" href="{{ url_for('web.login') }}">ROOTS <span>&amp;</span> ROUTES</a>
+      <div class="story-copy">
+        <p class="story-kicker">Jharkhand, closer to the heart</p>
+        <h1>Travel gently.<br>Remember deeply.</h1>
+        <p>Find wild places, living traditions and the people who make every journey matter.</p>
+      </div>
+      <p class="story-caption">A more thoughtful way to find your way.</p>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-panel-inner">
+        <p class="eyebrow">Welcome to ROOTS &amp; ROUTES</p>
+        <h2>Your Journey Begins Here.</h2>
+        <p class="auth-intro">
+          {{ "Create your profile to start exploring Jharkhand." if registering else "Sign in to continue your journey through Jharkhand." }}
+        </p>
+
+        <div class="auth-tabs" role="tablist" aria-label="Account options">
+          <a class="{{ 'is-active' if not registering else '' }}"
+             href="{{ url_for('web.login') }}"
+             {% if not registering %}aria-current="page"{% endif %}>Sign in</a>
+          <a class="{{ 'is-active' if registering else '' }}"
+             href="{{ url_for('web.register') }}"
+             {% if registering %}aria-current="page"{% endif %}>Create account</a>
+        </div>
+
+        <form class="auth-form" method="post" action="{{ url_for('web.register' if registering else 'web.login') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="full_name">Full Name</label>
+          <input
+            id="full_name"
+            name="full_name"
+            type="text"
+            autocomplete="name"
+            maxlength="100"
+            placeholder="Your name"
+            value="{{ full_name }}"
+            required
+          >
+          <label for="email">Email Address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            maxlength="254"
+            placeholder="you@example.com"
+            value="{{ email }}"
+            required
+          >
+          <button class="auth-submit" type="submit">
+            {{ "Create my account" if registering else "Continue to your journey" }}
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <aside class="prototype-note">
+          <span class="note-icon" aria-hidden="true">i</span>
+          <p><strong>Prototype sign-in</strong><br>
+            This demo uses only your name and email. It does not verify your identity or protect an account. Do not use sensitive information.</p>
+        </aside>
+        <p class="auth-footnote">By continuing, you’re choosing a more considered way to explore.</p>
+      </div>
+    </div>
+  </section>
+{% endblock %}

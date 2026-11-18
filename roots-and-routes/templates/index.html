@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard · ROOTS &amp; ROUTES{% endblock %}
+{% block body_class %}dashboard-body{% endblock %}
+{% block header %}{% endblock %}
+
+{% block content %}
+  <div class="dashboard-shell">
+    {% include "partials/sidebar.html" %}
+    <div class="dashboard-main">
+      {% set page_title = "Dashboard" %}
+      {% include "partials/topbar.html" %}
+
+      <div class="dashboard-content">
+        <section class="welcome-banner">
+          <div class="welcome-copy">
+            <p class="eyebrow eyebrow-light">YOUR NEXT CHAPTER STARTS HERE</p>
+            <h2>Welcome back, {{ user.full_name.split()[0] }}.</h2>
+            <p>Find a little more wonder in every journey through Jharkhand.</p>
+            <a class="button button-light" href="{{ url_for('web.workspace', slug='explore-destinations') }}">
+              Explore destinations <span aria-hidden="true">→</span>
+            </a>
+          </div>
+          <div class="welcome-art" aria-hidden="true">
+            <span class="art-sun"></span><span class="art-hill art-hill-back"></span><span class="art-hill art-hill-front"></span>
+            <span class="art-path"></span>
+          </div>
+          <span class="banner-coordinate">23.6102° N &nbsp; 85.2799° E</span>
+        </section>
+
+        <section class="stats-grid" aria-label="Destination catalogue statistics">
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-green" aria-hidden="true">◎</span>
+            <div><p>Destinations</p><strong>{{ destination_count }}</strong><small>in the catalogue</small></div>
+            <span class="stat-trend">Jharkhand</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-gold" aria-hidden="true">⌖</span>
+            <div><p>Districts</p><strong>{{ district_count }}</strong><small>represented</small></div>
+            <span class="stat-trend stat-muted">Explore</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-blue" aria-hidden="true">✳</span>
+            <div><p>Experience types</p><strong>{{ category_count }}</strong><small>to discover</small></div>
+            <span class="stat-trend stat-muted">Variety</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-lime" aria-hidden="true">↗</span>
+            <div><p>Average eco score</p><strong>{{ average_score if average_score is not none else "—" }}{% if average_score is not none %}<small class="score-outof">/100</small>{% endif %}</strong><small>{% if average_score is not none %}sourced ratings{% else %}not yet assessed{% endif %}</small></div>
+            <span class="stat-trend">Eco snapshot</span>
+          </article>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading dashboard-section-heading">
+            <div>
+              <p class="eyebrow">A GOOD PLACE TO BEGIN</p>
+              <h2>Featured destinations</h2>
+            </div>
+            <a class="text-link" href="{{ url_for('web.workspace', slug='explore-destinations') }}">View all places <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="featured-grid">
+            {% for destination in featured %}
+              <article class="featured-card">
+                <a class="featured-image featured-image-{{ loop.index }}" href="{{ url_for('web.workspace', slug='explore-destinations', q=destination.name) }}" aria-label="Explore {{ destination.name }}">
+                  <span class="image-tag">{{ destination.category }}</span>
+                  <span class="image-arrow" aria-hidden="true">↗</span>
+                </a>
+                <div class="featured-copy">
+                  <div class="destination-location"><span aria-hidden="true">⌖</span> {{ destination.district }} district</div>
+                  <h3><a href="{{ url_for('web.workspace', slug='explore-destinations', q=destination.name) }}">{{ destination.name }}</a></h3>
+                  <p>{{ destination.description }}</p>
+                  <div class="featured-foot">
+                    {% if destination.sustainability_score is not none %}
+                      <span class="score-pill"><span aria-hidden="true">✳</span> {{ destination.sustainability_score }} <small>sourced score</small></span>
+                    {% else %}
+                      <span class="score-pill score-unrated">Sustainability not assessed</span>
+                    {% endif %}
+                    <a href="{{ url_for('web.workspace', slug='explore-destinations', q=destination.name) }}">Discover <span aria-hidden="true">→</span></a>
+                  </div>
+                </div>
+              </article>
+            {% else %}
+              <p class="empty-inline">No destinations are available in the catalogue yet.</p>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="section-block quick-section">
+          <div class="section-heading dashboard-section-heading">
+            <div>
+              <p class="eyebrow">MAKE IT YOURS</p>
+              <h2>Quick actions</h2>
+            </div>
+          </div>
+          <div class="quick-grid">
+            <a class="quick-card quick-card-planner" href="{{ url_for('web.workspace', slug='ai-travel-planner') }}">
+              <span class="quick-icon" aria-hidden="true">✳</span>
+              <span><strong>Plan a thoughtful trip</strong><small>Open the travel planner workspace</small></span>
+              <span class="quick-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="quick-card quick-card-map" href="{{ url_for('web.workspace', slug='interactive-maps') }}">
+              <span class="quick-icon" aria-hidden="true">⌖</span>
+              <span><strong>Explore the map</strong><small>See places across Jharkhand</small></span>
+              <span class="quick-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="quick-card quick-card-culture" href="{{ url_for('web.workspace', slug='cultural-explorer') }}">
+              <span class="quick-icon" aria-hidden="true">◇</span>
+              <span><strong>Find living culture</strong><small>Browse cultural catalogue entries</small></span>
+              <span class="quick-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="quick-card quick-card-saved" href="{{ url_for('web.workspace', slug='my-itineraries') }}">
+              <span class="quick-icon" aria-hidden="true">▤</span>
+              <span><strong>My itineraries</strong><small>Visit your personal trip space</small></span>
+              <span class="quick-arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        </section>
+
+        <section class="lower-grid">
+          <article class="dashboard-panel recommended-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">A GENTLE NUDGE</p><h2>Recommended places</h2></div>
+              <a class="text-link" href="{{ url_for('web.workspace', slug='sustainability-dashboard') }}">See scores <span aria-hidden="true">→</span></a>
+            </div>
+            <p class="panel-description">Destinations with a published, source-linked sustainability rating.</p>
+            <div class="recommended-list">
+              {% for destination in recommended %}
+                <a class="recommended-item" href="{{ url_for('web.workspace', slug='explore-destinations', q=destination.name) }}">
+                  <span class="recommended-rank">{{ "%02d"|format(loop.index) }}</span>
+                  <span class="recommended-copy"><strong>{{ destination.name }}</strong><small>{{ destination.category }} · {{ destination.district }}</small></span>
+                  <span class="recommended-score">{{ destination.sustainability_score }}<small>/100</small></span>
+                  <span class="recommended-arrow" aria-hidden="true">↗</span>
+                </a>
+              {% else %}
+                <p class="empty-inline">No destinations have a source-linked sustainability rating yet.</p>
+              {% endfor %}
+            </div>
+            <p class="data-caveat">Unrated destinations are not ranked or assigned a placeholder score.</p>
+          </article>
+
+          <article class="dashboard-panel sustainability-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">TRAVEL WITH CARE</p><h2>Sustainability overview</h2></div>
+              <span class="panel-menu" aria-hidden="true">···</span>
+            </div>
+            <div class="sustainability-summary">
+              <span class="sustainability-ring"><strong>{{ average_score if average_score is not none else "—" }}</strong><small>avg score</small></span>
+              <p>Sourced sustainability ratings across <strong>{{ destination_count }} listed places</strong>.</p>
+            </div>
+            {% if chart_data %}
+              <div class="chart-wrap"><canvas id="sustainability-chart" aria-label="Sourced sustainability scores by destination"></canvas></div>
+            {% else %}
+              <p class="empty-inline">No sourced sustainability scores are available yet.</p>
+            {% endif %}
+            <a class="panel-bottom-link" href="{{ url_for('web.workspace', slug='sustainability-dashboard') }}">Open sustainability dashboard <span aria-hidden="true">→</span></a>
+            <script id="sustainability-data" type="application/json">{{ chart_data|tojson }}</script>
+          </article>
+
+          <article class="dashboard-panel itineraries-panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">YOUR JOURNEYS</p><h2>Recent itineraries</h2></div>
+              <a class="text-link" href="{{ url_for('web.workspace', slug='my-itineraries') }}">View all <span aria-hidden="true">→</span></a>
+            </div>
+            <div class="empty-itinerary">
+              <span class="empty-illustration" aria-hidden="true">↗</span>
+              <strong>Your next story starts somewhere.</strong>
+              <p>User-specific itinerary saving is not enabled in this prototype yet.</p>
+              <a class="button button-outline" href="{{ url_for('web.workspace', slug='my-itineraries') }}">Open my itineraries</a>
+            </div>
+          </article>
+        </section>
+
+        <footer class="dashboard-footer">
+          <span>ROOTS &amp; ROUTES <span aria-hidden="true">·</span> Explore with care.</span>
+          <span>Ratings remain unassessed until supported by linked evidence.</span>
+        </footer>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+{% endblock %}

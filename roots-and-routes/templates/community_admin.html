@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Community Administration · ROOTS &amp; ROUTES{% endblock %}
+{% block body_class %}dashboard-body{% endblock %}
+{% block header %}{% endblock %}
+
+{% block content %}
+  <div class="dashboard-shell">
+    {% include "partials/sidebar.html" %}
+    <div class="dashboard-main">
+      {% set page_title = "Community administration" %}
+      {% include "partials/topbar.html" %}
+
+      <div class="dashboard-content workspace-content">
+        <section class="workspace-intro">
+          <div>
+            <p class="eyebrow">PROVIDER DIRECTORY</p>
+            <h2>Community administration</h2>
+            <p>Review sources, manage published experiences, and triage traveller enquiries.</p>
+          </div>
+          <a class="text-link" href="{{ url_for('web.workspace', slug='community-connect') }}">Back to directory <span aria-hidden="true">→</span></a>
+        </section>
+
+        {% if is_admin %}
+          <section class="community-admin-summary" aria-label="Community directory overview">
+            <article class="workspace-panel">
+              <span>Published listings</span>
+              <strong>{{ providers|selectattr("is_published")|list|length }}</strong>
+            </article>
+            <article class="workspace-panel">
+              <span>Draft or unpublished</span>
+              <strong>{{ providers|rejectattr("is_published")|list|length }}</strong>
+            </article>
+            <article class="workspace-panel">
+              <span>New enquiries</span>
+              <strong>{{ enquiries|selectattr("status", "equalto", "new")|list|length }}</strong>
+            </article>
+          </section>
+
+          <section class="workspace-panel community-admin-section">
+            <header class="community-admin-section-heading">
+              <div>
+                <p class="eyebrow">LISTINGS</p>
+                <h3>Provider profiles</h3>
+              </div>
+              <a class="button button-green" href="{{ url_for('web.community_provider_new') }}">Add provider <span aria-hidden="true">+</span></a>
+            </header>
+            {% if providers %}
+              <div class="community-admin-provider-list">
+                {% for provider in providers %}
+                  <article class="community-admin-provider">
+                    <div class="community-admin-provider-info">
+                      <span class="community-admin-status {% if provider.is_published %}is-published{% else %}is-unpublished{% endif %}">
+                        {{ "Published" if provider.is_published else "Draft / unpublished" }}
+                      </span>
+                      <h4>{{ provider.name }}</h4>
+                      <p>{{ category_labels[provider.category] }} · {{ provider.location }}</p>
+                      <small>
+                        {% if provider.verified_on %}Listing reviewed {{ provider.verified_on }}{% else %}No listing review date{% endif %}
+                        · {% if provider.contact_verified %}contact verified{% else %}no verified contact details{% endif %}
+                      </small>
+                    </div>
+                    <div class="community-admin-provider-actions">
+                      <a class="button button-outline" href="{{ url_for('web.community_provider_edit', provider_id=provider.id) }}">Edit</a>
+                      {% if provider.is_published %}
+                        <form method="post" action="{{ url_for('web.community_provider_archive', provider_id=provider.id) }}">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button class="button button-outline community-unpublish-button" type="submit">Unpublish</button>
+                        </form>
+                      {% endif %}
+                    </div>
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="community-admin-empty">No provider profiles have been added. Create a sourced listing when one is ready; no demo data is seeded.</p>
+            {% endif %}
+          </section>
+
+          <section class="workspace-panel community-admin-section">
+            <header class="community-admin-section-heading">
+              <div>
+                <p class="eyebrow">INBOX</p>
+                <h3>Traveller enquiries</h3>
+              </div>
+              <span class="community-admin-inbox-count">{{ enquiries|length }} recent</span>
+            </header>
+            <p class="community-admin-privacy-note">The sender name and account email come from the name-and-email prototype and are not identity-verified. Enquiries are stored here; the app does not send email automatically.</p>
+            {% if enquiries %}
+              <div class="community-enquiry-list">
+                {% for enquiry in enquiries %}
+                  <article class="community-admin-enquiry">
+                    <div class="community-admin-enquiry-header">
+                      <div>
+                        <span class="community-admin-status {% if enquiry.status == 'new' %}is-new{% else %}is-resolved{% endif %}">{{ enquiry.status|title }}</span>
+                        <h4>{{ enquiry.provider_name }}</h4>
+                        <p>{{ enquiry.sender_name }} · <a href="mailto:{{ enquiry.sender_email }}">{{ enquiry.sender_email }}</a></p>
+                      </div>
+                      <time>{{ enquiry.created_at }}</time>
+                    </div>
+                    <p class="community-admin-enquiry-message">{{ enquiry.message }}</p>
+                    {% if enquiry.status == "new" %}
+                      <form method="post" action="{{ url_for('web.community_enquiry_resolve', enquiry_id=enquiry.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="text-button" type="submit">Mark resolved</button>
+                      </form>
+                    {% endif %}
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="community-admin-empty">No enquiries have been submitted.</p>
+            {% endif %}
+          </section>
+        {% else %}
+          <section class="workspace-panel community-admin-unlock">
+            <div class="community-admin-lock-icon" aria-hidden="true">⌑</div>
+            <p class="eyebrow">RESTRICTED AREA</p>
+            <h3>Unlock provider administration</h3>
+            {% if admin_key_configured %}
+              <p>Enter the private community admin key configured by the site operator. The key is checked server-side and is not stored in your session.</p>
+              <form method="post" action="{{ url_for('web.community_admin_unlock') }}" class="community-admin-unlock-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label for="community-admin-key">Admin key</label>
+                <input id="community-admin-key" type="password" name="admin_key" minlength="32" autocomplete="current-password" required>
+                <button class="button button-green" type="submit">Unlock administration</button>
+              </form>
+            {% else %}
+              <p>Administration is disabled. The site operator must configure a private <code>COMMUNITY_ADMIN_KEY</code> of at least 32 characters in the environment before listings can be managed.</p>
+            {% endif %}
+          </section>
+        {% endif %}
+
+        <footer class="dashboard-footer">
+          <span>ROOTS &amp; ROUTES <span aria-hidden="true">·</span> Community stewardship.</span>
+          <span>Publish only after reviewing listing and contact sources.</span>
+        </footer>
+      </div>
+    </div>
+  </div>
+{% endblock %}

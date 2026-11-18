@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="title description">
+  <title id="title">Community experience placeholder</title>
+  <desc id="description">A soft illustration of forested hills at sunrise.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#dcebdc"/>
+      <stop offset="1" stop-color="#f6f1df"/>
+    </linearGradient>
+    <linearGradient id="hill" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#789b70"/>
+      <stop offset="1" stop-color="#315f48"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="600" fill="url(#sky)"/>
+  <circle cx="716" cy="180" r="72" fill="#e9c987" opacity=".8"/>
+  <path d="M0 400 218 214l170 158 170-206 270 241 132-90v283H0Z" fill="#a6b995"/>
+  <path d="M0 437 221 301l191 128 222-197 326 207v164H0Z" fill="url(#hill)"/>
+  <path d="M0 496c144-61 268-34 392 12 135 49 267 37 568-52v147H0Z" fill="#234b3b" opacity=".9"/>
+</svg>
