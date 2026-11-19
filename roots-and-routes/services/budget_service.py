@@ -80,7 +80,7 @@ class BudgetValidationError(ValueError):
 
 def get_budget_options() -> dict[str, Any]:
     return {
-        "travel_modes": {},
+        "travel_modes": TRAVEL_MODES,
         "accommodation_preferences": ACCOMMODATION_PREFERENCES,
         "food_preferences": FOOD_PREFERENCES,
         "activity_sample_rate_inr": ACTIVITY_SAMPLE_RATE_INR,

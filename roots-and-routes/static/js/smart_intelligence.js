@@ -165,6 +165,7 @@ function initializeSmartTripIntelligence() {
       budget_inr: Number(document.querySelector("#intelligence-budget-limit").value),
       days: Number(document.querySelector("#intelligence-days").value),
       travellers: Number(document.querySelector("#intelligence-travellers").value),
+      travel_mode: document.querySelector("#intelligence-travel-mode").value,
       accommodation_preference: document.querySelector("#intelligence-accommodation").value,
       food_preference: document.querySelector("#intelligence-food").value,
       expense_overrides: {},

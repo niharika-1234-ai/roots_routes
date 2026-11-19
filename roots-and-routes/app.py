@@ -36,6 +36,7 @@ def create_app(test_config: dict | None = None) -> Flask:
             str(Path(app.instance_path) / "roots_and_routes.sqlite3"),
         ),
         DESTINATIONS_PATH=PROJECT_ROOT / "data" / "destinations.csv",
+        HIDDEN_GEM_SAMPLES_PATH=PROJECT_ROOT / "data" / "hidden_gems_sample.json",
         CULTURAL_DESTINATIONS_PATH=PROJECT_ROOT / "data" / "cultural_destinations.json",
         CULTURAL_EVENTS_PATH=PROJECT_ROOT / "data" / "cultural_events.csv",
         CROWD_HISTORY_PATH=PROJECT_ROOT / "data" / "crowd_history_sample.csv",

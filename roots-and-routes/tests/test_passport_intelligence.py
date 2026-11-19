@@ -274,6 +274,9 @@ class DestinationIntelligenceTests(unittest.TestCase):
             b"Safety information",
             b"not browser location",
             b"Budget estimate",
+            b'id="intelligence-travel-mode"',
+            b"Intercity bus",
+            b"Private car",
         ):
             self.assertIn(expected, page.data)
 

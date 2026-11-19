@@ -50,9 +50,9 @@ WORKSPACE_PAGES: dict[str, dict[str, Any]] = {
     },
     "interactive-maps": {
         "mode": "map",
-        "description": "Find a place and explore mapped or synthetic nearby restaurants and stays.",
+        "description": "Plan a road route from your current location or another source, then explore mapped or synthetic nearby places.",
         "status": "Map available",
-        "note": "This map explores nearby places without road routing or transport calculations. Known destinations are loaded locally. OpenStreetMap listings may be incomplete; restaurant and hotel fallbacks are clearly labelled synthetic samples.",
+        "note": "Road directions use OSRM and require a source and destination; browser location is used only after you choose to share it. Known destinations are loaded locally. OpenStreetMap listings may be incomplete; restaurant and hotel fallbacks are clearly labelled synthetic samples.",
     },
     "hidden-gems": {
         "mode": "hidden_gems",

@@ -44,6 +44,7 @@ class CulturalEventDataError(Exception):
 def get_cultural_events(
     csv_path: str | Path,
     category: str = "",
+    query: str = "",
     latitude: float | None = None,
     longitude: float | None = None,
     radius: int = 5000,
@@ -51,6 +52,8 @@ def get_cultural_events(
 ) -> list[dict[str, object]]:
     if category and category not in CULTURAL_EVENT_CATEGORIES:
         raise ValueError("Unsupported cultural event category.")
+    if not isinstance(query, str) or len(query) > 120:
+        raise ValueError("Event search text must be 120 characters or fewer.")
     if (latitude is None) != (longitude is None):
         raise ValueError("Both coordinates are required for nearby events.")
     if not 250 <= radius <= 10000:
@@ -64,6 +67,7 @@ def get_cultural_events(
         raise ValueError("Event search coordinates are invalid.")
 
     current_date = today or date.today()
+    normalized_query = query.strip().casefold()
     try:
         with Path(csv_path).open(encoding="utf-8-sig", newline="") as event_file:
             reader = csv.DictReader(event_file)
@@ -88,6 +92,11 @@ def get_cultural_events(
         if event["end_date"] < current_date.isoformat():
             continue
         if category and event["category"] != category:
+            continue
+        if normalized_query and normalized_query not in " ".join(
+            str(event[field])
+            for field in ("name", "category_label", "venue", "district", "description")
+        ).casefold():
             continue
         if latitude is not None and longitude is not None:
             distance = distance_km(

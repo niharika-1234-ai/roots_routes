@@ -748,6 +748,9 @@ def cultural_events():
     category = request.args.get("category", "").strip().casefold()
     if category and category not in CULTURAL_EVENT_CATEGORIES:
         return jsonify({"error": "Choose a supported cultural event category."}), 400
+    query = request.args.get("q", "").strip()
+    if len(query) > 120:
+        return jsonify({"error": "Event search text must be 120 characters or fewer."}), 400
 
     latitude = request.args.get("lat")
     longitude = request.args.get("lon")
@@ -768,13 +771,14 @@ def cultural_events():
         events = get_cultural_events(
             current_app.config["CULTURAL_EVENTS_PATH"],
             category=category,
+            query=query,
             latitude=coordinates[0] if coordinates else None,
             longitude=coordinates[1] if coordinates else None,
             radius=radius,
         )
     except CulturalEventDataError:
-        current_app.logger.exception("Verified cultural event data could not be loaded.")
-        return jsonify({"error": "Verified cultural event listings are temporarily unavailable."}), 500
+        current_app.logger.exception("Cultural event data could not be loaded.")
+        return jsonify({"error": "Cultural event listings are temporarily unavailable."}), 500
     for event in events:
         if event.get("source_name") == "Roots & Routes prototype dataset":
             event["is_synthetic"] = True

@@ -20,6 +20,10 @@ from services.dashboard_service import (
     summarize_destinations,
 )
 from services.destination_service import get_destinations
+from services.hidden_gem_sample_service import (
+    HiddenGemSampleDataError,
+    get_hidden_gem_samples,
+)
 from services.cultural_explorer_service import (
     CulturalExplorerDataError,
     canonical_public_url,
@@ -206,6 +210,9 @@ def workspace(slug: str):
     query = request.args.get("q", "")[:120]
     category = request.args.get("category", "")[:80]
     ranked_gems = []
+    hidden_gem_catalogue = []
+    sample_hidden_gems = []
+    hidden_gem_categories = set()
     crowd_dashboard = None
     carbon_factors = []
     community_providers = []
@@ -221,6 +228,29 @@ def workspace(slug: str):
     elif page["mode"] == "hidden_gems":
         matching_destinations = filter_destinations(destinations, query, category or None)
         ranked_gems = rank_hidden_gems(matching_destinations)
+        try:
+            all_sample_hidden_gems = get_hidden_gem_samples(
+                current_app.config["HIDDEN_GEM_SAMPLES_PATH"]
+            )
+            sample_hidden_gems = get_hidden_gem_samples(
+                current_app.config["HIDDEN_GEM_SAMPLES_PATH"],
+                query,
+                category,
+            )
+            hidden_gem_categories = {
+                sample["category"] for sample in all_sample_hidden_gems
+            }
+        except HiddenGemSampleDataError:
+            current_app.logger.exception("Hidden-gem sample data could not be loaded.")
+            abort(500, description="Hidden-gem sample data is unavailable or invalid.")
+        ranked_destination_ids = {
+            item["destination"].id for item in ranked_gems
+        }
+        hidden_gem_catalogue = [
+            destination
+            for destination in matching_destinations
+            if destination.id not in ranked_destination_ids
+        ]
         visible_destinations = [
             item["destination"] for item in ranked_gems
         ]
@@ -321,10 +351,15 @@ def workspace(slug: str):
         page=page,
         query=query,
         category=category,
-        categories=sorted({destination.category for destination in destinations}),
+        categories=sorted(
+            {destination.category for destination in destinations}
+            | hidden_gem_categories
+        ),
         event_categories=CULTURAL_EVENT_CATEGORIES.items(),
         destinations=visible_destinations,
         ranked_gems=ranked_gems,
+        hidden_gem_catalogue=hidden_gem_catalogue,
+        sample_hidden_gems=sample_hidden_gems,
         crowd_dashboard=crowd_dashboard,
         crowd_months=CROWD_MONTHS,
         carbon_factors=carbon_factors,

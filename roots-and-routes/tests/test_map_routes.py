@@ -130,7 +130,12 @@ class MapApiTests(unittest.TestCase):
         response = self.client.get("/workspace/interactive-maps")
         self.assertEqual(response.status_code, 200)
         for control in (
+            b'id="route-planner-form"',
+            b'id="route-source"',
+            b'id="route-destination"',
+            b'id="use-current-location"',
             b'id="catalogue-destination"',
+            b'id="route-results"',
             b'data-nearby-category="restaurants"',
             b'data-nearby-category="hotels"',
             b'data-nearby-category="events"',

@@ -74,6 +74,8 @@ class TouristSafetyTests(unittest.TestCase):
             b"does not send, store, or confirm delivery of messages.",
             b'data-nearby-category="hospitals"',
             b'data-nearby-category="police"',
+            b'id="use-current-location"',
+            b'id="route-destination"',
             b"static/js/safety.js",
         ):
             self.assertIn(expected, response.data)

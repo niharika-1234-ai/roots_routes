@@ -34,8 +34,8 @@
             <form class="catalogue-search" action="{{ url_for('web.workspace', slug=active_page) }}" method="get" role="search">
               <div class="catalogue-filters">
                 <div class="catalogue-query-field">
-                  <label for="catalogue-query">Search places</label>
-                  <input id="catalogue-query" type="search" name="q" value="{{ query }}" placeholder="Try a place, district, or experience">
+                  <label for="catalogue-query">Search places and demo entries</label>
+                  <input id="catalogue-query" type="search" name="q" value="{{ query }}" placeholder="Try Moonfern Falls, a place, or district">
                 </div>
                 <div class="catalogue-category-field">
                   <label for="category-filter">Category</label>
@@ -112,14 +112,62 @@
               <div class="module-empty compact-empty">
                 <span class="empty-illustration" aria-hidden="true">◇</span>
                 <h3>No evidence-based candidates yet</h3>
-                <p>No destination matches these filters with all five source-linked ratings. The current starter data has no sourced ratings, so it does not label any place as a hidden gem.</p>
+                <p>No destination currently meets the sourced-rating and popularity criteria. The catalogue places below are not ranked or verified hidden gems.</p>
               </div>
+              {% if hidden_gem_catalogue %}
+                <section class="workspace-panel hidden-gem-evidence-panel" aria-labelledby="hidden-gem-evidence-title">
+                  <h3 id="hidden-gem-evidence-title">Unranked catalogue places</h3>
+                  <div class="workspace-destination-grid">
+                    {% for destination in hidden_gem_catalogue %}
+                      <article class="workspace-destination-card">
+                        <div class="workspace-destination-copy">
+                          <p class="destination-location">{{ destination.district }} · {{ destination.category }}</p>
+                          <h3>{{ destination.name }}</h3>
+                          <p>{{ destination.description }}</p>
+                          <p class="section-caption">Not ranked as a hidden gem</p>
+                          <a href="{{ destination.source_url }}" target="_blank" rel="noopener noreferrer">Open destination source ↗</a>
+                        </div>
+                      </article>
+                    {% endfor %}
+                  </div>
+                </section>
+              {% endif %}
             {% else %}
               <div class="module-empty compact-empty">
                 <span class="empty-illustration" aria-hidden="true">⌕</span>
                 <h3>No matching places</h3>
                 <p>Try a different search, district, or category.</p>
               </div>
+            {% endif %}
+            {% if page.mode == "hidden_gems" and sample_hidden_gems %}
+              <section class="hidden-gem-sample-panel" aria-labelledby="hidden-gem-sample-title">
+                <p class="eyebrow">FICTIONAL DEMO DATA</p>
+                <h3 id="hidden-gem-sample-title">Searchable hidden-gem examples</h3>
+                <p>These place names and ratings are invented for testing search and ranking only. They are not real locations, sourced assessments, or travel recommendations.</p>
+                <div class="workspace-destination-grid">
+                  {% for sample in sample_hidden_gems %}
+                    <article class="workspace-destination-card hidden-gem-sample-card">
+                      <div class="workspace-destination-copy">
+                        <p class="destination-location">{{ sample.district }} · {{ sample.category }}</p>
+                        <h3>{{ sample.name }}</h3>
+                        <p>{{ sample.description }}</p>
+                        <span class="score-pill">{{ sample.ranking_score }}/100 <small>invented demo score</small></span>
+                        <dl class="destination-metrics">
+                          {% for label, field in [
+                            ("Natural value", "natural_value"),
+                            ("Cultural value", "cultural_value"),
+                            ("Popularity", "popularity"),
+                            ("Accessibility", "accessibility"),
+                            ("Sustainability", "sustainability_score")
+                          ] %}
+                            <div><dt>{{ label }}</dt><dd>{{ sample[field] }}/100 · demo</dd></div>
+                          {% endfor %}
+                        </dl>
+                      </div>
+                    </article>
+                  {% endfor %}
+                </div>
+              </section>
             {% endif %}
           </section>
         {% elif page.mode == "culture" %}
@@ -325,6 +373,14 @@
               <div>
                 <label for="intelligence-travellers">Travellers</label>
                 <input id="intelligence-travellers" type="number" min="1" max="1000" value="2">
+              </div>
+              <div>
+                <label for="intelligence-travel-mode">Travel mode</label>
+                <select id="intelligence-travel-mode">
+                  {% for mode_id, mode in budget_options.travel_modes.items() %}
+                    <option value="{{ mode_id }}" {% if mode_id == "bus" %}selected{% endif %}>{{ mode.label }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div>
                 <label for="intelligence-budget-limit">Total budget (INR · sample)</label>
@@ -537,7 +593,12 @@
                 <span class="empty-illustration" aria-hidden="true">◇</span>
                 <p class="eyebrow">NO VERIFIED PROFILES YET</p>
                 <h3>No local experiences are listed</h3>
-                <p>No sample profiles are mixed into this directory. An administrator can add and publish provider listings after reviewing their source and contact details.</p>
+                <p>No sample profiles are mixed into this directory. Published hosts appear after an administrator reviews their listing source; contact details require a separate verification. Until then, explore the sourced cultural guides or find mapped places nearby.</p>
+                <div class="community-empty-actions">
+                  <a class="button button-outline" href="{{ url_for('web.cultural_index') }}">Browse cultural guides</a>
+                  <a class="button button-outline" href="{{ url_for('web.workspace', slug='interactive-maps') }}">Explore places on the map</a>
+                  <a class="button button-green" href="{{ url_for('web.community_admin') }}">Review listing administration</a>
+                </div>
               </div>
             {% endif %}
           </section>
@@ -630,17 +691,45 @@
               <div id="destination-map" class="workspace-map" aria-label="Interactive map of Jharkhand destinations"></div>
             </div>
             <aside class="workspace-panel map-list-panel">
-              <h3>Choose a destination</h3>
-              <p class="panel-description">Select a place to display nearby sample or mapped listings.</p>
+              <h3>Plan a route or explore nearby places</h3>
+              <p class="panel-description">Set a starting point and destination to get road directions, or choose a destination to explore nearby places.</p>
               <datalist id="destination-suggestions"></datalist>
-              <div class="route-planner-form">
+              <form id="route-planner-form" class="route-planner-form">
                 <div class="route-field">
-                  <label for="catalogue-destination">Or select from the destination catalogue</label>
+                  <label for="route-source">Source</label>
+                  <div class="route-location-input">
+                    <input id="route-source" type="text" list="destination-suggestions" placeholder="Use your current location or search">
+                    <button id="use-current-location" class="button button-outline" type="button">Use current location</button>
+                  </div>
+                  <div id="location-results-source" class="location-suggestions" role="listbox" hidden></div>
+                  <button class="button button-outline" type="button" data-geocode="source">Search source</button>
+                </div>
+                <button id="swap-locations" class="swap-locations" type="button">Swap source and destination</button>
+                <div class="route-field">
+                  <label for="route-destination">Destination</label>
+                  <div class="route-location-input">
+                    <input id="route-destination" type="text" list="destination-suggestions" placeholder="Search a destination">
+                    <button class="button button-outline" type="button" data-geocode="destination">Search destination</button>
+                  </div>
+                  <div id="location-results-destination" class="location-suggestions" role="listbox" hidden></div>
+                </div>
+                <div class="route-field">
+                  <label for="catalogue-destination">Or select a destination from the catalogue</label>
                   <select id="catalogue-destination">
                     <option value="">Choose a Jharkhand destination</option>
                   </select>
                 </div>
-              </div>
+                <button class="button route-submit" type="submit">Show road directions</button>
+                <p id="route-status" class="route-status" role="status" aria-live="polite">Use your current location or search for a source, then choose a destination.</p>
+              </form>
+
+              <section id="route-results" class="route-results" aria-label="Road directions" hidden>
+                <div id="route-summary" class="route-summary"></div>
+                <p id="route-alternatives-note" class="route-help"></p>
+                <div id="route-options" class="route-options" aria-label="Route options"></div>
+                <h4>Turn-by-turn directions</h4>
+                <ol id="turn-by-turn" class="turn-by-turn"></ol>
+              </section>
 
               <section class="nearby-section"
                        data-module-category="{{ page.map_category or '' }}"
@@ -709,6 +798,13 @@
                       {% endfor %}
                     </select>
                   </div>
+                  <form id="event-search-form" class="map-filter-field" role="search">
+                    <label for="event-search">Search cultural-event samples</label>
+                    <div class="route-location-input">
+                      <input id="event-search" type="search" maxlength="120" placeholder="Try Sarhul, Sohrai, or Ranchi">
+                      <button class="button button-outline" type="submit">Search</button>
+                    </div>
+                  </form>
                   <p class="route-help event-source-note">
                     These dates, venues and programme details are <strong>synthetic prototype data</strong> created for demonstration.
                     They are not confirmed events. Recheck official or organiser sources before planning a visit.
@@ -1459,7 +1555,7 @@
   <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
   {% if page.mode == "map" %}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}?v=synthetic-events-2" defer></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=event-search-4" defer></script>
     {% if page.map_category == "safety" %}
       <script src="{{ url_for('static', filename='js/safety.js') }}" defer></script>
     {% endif %}

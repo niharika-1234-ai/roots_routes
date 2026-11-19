@@ -139,10 +139,12 @@ function setupRouteControls() {
   const form = document.querySelector("#route-planner-form");
   const destinationSelect = document.querySelector("#catalogue-destination");
   const swapButton = document.querySelector("#swap-locations");
+  const currentLocationButton = document.querySelector("#use-current-location");
   const nearbyButtons = document.querySelectorAll("[data-nearby-category]");
   const cuisineFilter = document.querySelector("#restaurant-cuisine-filter");
   const stayTypeFilter = document.querySelector("#stay-type-filter");
   const eventCategoryFilter = document.querySelector("#event-category-filter");
+  const eventSearchForm = document.querySelector("#event-search-form");
 
   for (const role of ["source", "destination"]) {
     const input = document.querySelector(`#route-${role}`);
@@ -156,42 +158,54 @@ function setupRouteControls() {
     searchButton?.addEventListener("click", () => searchLocation(role, searchButton));
   }
 
+  currentLocationButton?.addEventListener("click", () => useCurrentLocation(currentLocationButton));
   window.addEventListener("roots-routes:set-map-location", (event) => {
     const location = event.detail;
     if (
-      mapState.moduleCategory !== "safety"
-      || !Number.isFinite(location?.latitude)
+      !Number.isFinite(location?.latitude)
       || !Number.isFinite(location?.longitude)
       || Math.abs(location.latitude) > 90
       || Math.abs(location.longitude) > 180
     ) {
       return;
     }
-    setResolvedLocation("destination", {
+    const currentLocation = {
       label: "My current location",
       latitude: location.latitude,
       longitude: location.longitude,
       sourceUrl: "",
       destinationId: null,
       deviceLocation: true,
-    });
+    };
+    setResolvedLocation("source", currentLocation);
+    if (mapState.moduleCategory === "safety") {
+      setResolvedLocation("destination", currentLocation);
+    }
     mapState.map?.setView([location.latitude, location.longitude], 14);
   });
   window.addEventListener("roots-routes:clear-map-location", () => {
-    if (!mapState.locations.destination?.deviceLocation) {
-      return;
+    let destinationCleared = false;
+    for (const role of ["source", "destination"]) {
+      if (mapState.locations[role]?.deviceLocation) {
+        mapState.locations[role] = null;
+        document.querySelector(`#route-${role}`).value = "";
+        destinationCleared = destinationCleared || role === "destination";
+      }
     }
-    mapState.locations.destination = null;
-    document.querySelector("#route-destination").value = "";
-    document.querySelector("#catalogue-destination").value = "";
+    if (destinationCleared) {
+      document.querySelector("#catalogue-destination").value = "";
+    }
     invalidateRoute();
-    clearNearbyResults();
-    updateNearbyButtons();
+    if (destinationCleared) {
+      clearNearbyResults();
+      updateNearbyButtons();
+    }
     setStatus(document.querySelector("#route-status"), "Current location cleared from the map.");
   });
 
   form?.addEventListener("submit", (event) => {
     event.preventDefault();
+    calculateRoute();
   });
   destinationSelect?.addEventListener("change", () => {
     const destination = mapState.destinationsById.get(destinationSelect.value);
@@ -199,6 +213,7 @@ function setupRouteControls() {
       selectCatalogueDestination(destination);
     } else {
       mapState.locations.destination = null;
+      document.querySelector("#route-destination").value = "";
       invalidateRoute();
       clearNearbyResults();
       updateNearbyButtons();
@@ -212,7 +227,10 @@ function setupRouteControls() {
   stayTypeFilter?.addEventListener("change", renderFilteredNearbyPlaces);
   eventCategoryFilter?.addEventListener("change", () => {
     if (mapState.moduleCategory === "cultural-events") {
-      loadCulturalEvents(false);
+      loadCulturalEvents(
+        mapState.lastNearbyCategory === "cultural-events"
+        && Boolean(mapState.locations.destination),
+      );
     } else if (mapState.lastNearbyCategory === "cultural-events") {
       const eventButton = document.querySelector('[data-nearby-category="cultural-events"]');
       if (eventButton && mapState.locations.destination) {
@@ -220,7 +238,50 @@ function setupRouteControls() {
       }
     }
   });
+  eventSearchForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadCulturalEvents(
+      mapState.lastNearbyCategory === "cultural-events"
+      && Boolean(mapState.locations.destination),
+    );
+  });
   updateNearbyButtons();
+}
+
+function useCurrentLocation(button) {
+  const status = document.querySelector("#route-status");
+  if (!navigator.geolocation) {
+    setStatus(status, "This browser does not support location access. Search for a source location instead.", true);
+    return;
+  }
+
+  button.disabled = true;
+  setStatus(status, "Waiting for your browser's location permission…", false, true);
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const location = {
+        label: "My current location",
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        sourceUrl: "",
+        destinationId: null,
+        deviceLocation: true,
+      };
+      setResolvedLocation("source", location);
+      mapState.map?.setView([location.latitude, location.longitude], 14);
+      button.disabled = false;
+    },
+    (error) => {
+      const messages = {
+        1: "Location permission was denied. Search for a source location instead.",
+        2: "Your device could not determine a location. Try again or search for a source.",
+        3: "Location lookup timed out. Try again or search for a source.",
+      };
+      setStatus(status, messages[error.code] || "Current location is unavailable. Search for a source instead.", true);
+      button.disabled = false;
+    },
+    { enableHighAccuracy: false, maximumAge: 30000, timeout: 10000 },
+  );
 }
 
 function handleLocationInput(role) {
@@ -394,7 +455,7 @@ async function calculateRoute() {
   if (!source || !destination) {
     setStatus(
       document.querySelector("#route-status"),
-      "Choose both locations from the destination suggestions or search for each location.",
+      "Choose a source (or use your current location) and a destination before requesting directions.",
       true,
     );
     return;
@@ -664,8 +725,12 @@ async function loadCulturalEvents(nearbyOnly) {
 
   const query = new URLSearchParams();
   const category = document.querySelector("#event-category-filter")?.value;
+  const search = document.querySelector("#event-search")?.value.trim();
   if (category) {
     query.set("category", category);
+  }
+  if (search) {
+    query.set("q", search);
   }
   if (nearbyOnly && destination) {
     query.set("lat", String(destination.latitude));
@@ -678,7 +743,7 @@ async function loadCulturalEvents(nearbyOnly) {
   mapState.lastNearbyCategory = "cultural-events";
   setStatus(
     status,
-    nearbyOnly ? "Checking verified cultural event listings near this destination…" : "Loading source-verified cultural events…",
+    nearbyOnly ? "Loading cultural event records near this destination…" : "Loading upcoming cultural event records…",
     false,
     true,
   );

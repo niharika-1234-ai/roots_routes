@@ -1,0 +1,40 @@
+{
+  "samples": [
+    {
+      "id": "demo-moonfern-falls",
+      "name": "Demo Moonfern Falls",
+      "district": "Fictional demo area",
+      "category": "Waterfall",
+      "description": "Invented waterfall entry for trying hidden-gem search and ranking display. This is not a real place.",
+      "natural_value": 91,
+      "cultural_value": 74,
+      "popularity": 22,
+      "accessibility": 63,
+      "sustainability_score": 86
+    },
+    {
+      "id": "demo-whispering-sal-grove",
+      "name": "Demo Whispering Sal Grove",
+      "district": "Fictional demo area",
+      "category": "Forest trail",
+      "description": "Invented forest-trail entry for trying hidden-gem search and ranking display. This is not a real place.",
+      "natural_value": 88,
+      "cultural_value": 81,
+      "popularity": 17,
+      "accessibility": 58,
+      "sustainability_score": 82
+    },
+    {
+      "id": "demo-cloudbreak-viewpoint",
+      "name": "Demo Cloudbreak Viewpoint",
+      "district": "Fictional demo area",
+      "category": "Hill viewpoint",
+      "description": "Invented viewpoint entry for trying hidden-gem search and ranking display. This is not a real place.",
+      "natural_value": 84,
+      "cultural_value": 69,
+      "popularity": 31,
+      "accessibility": 76,
+      "sustainability_score": 78
+    }
+  ]
+}

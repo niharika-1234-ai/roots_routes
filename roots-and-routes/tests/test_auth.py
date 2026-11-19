@@ -270,6 +270,20 @@ class AuthenticationFlowTests(unittest.TestCase):
         self.assertEqual(hidden_gems.status_code, 200)
         self.assertIn(b"Beyond the Tourist Trail", hidden_gems.data)
         self.assertIn(b"No evidence-based candidates yet", hidden_gems.data)
+        self.assertIn(b"Unranked catalogue places", hidden_gems.data)
+        self.assertIn(b"Not ranked as a hidden gem", hidden_gems.data)
+        self.assertIn(b"Demo Moonfern Falls", hidden_gems.data)
+        self.assertIn(b"Fictional demo area", hidden_gems.data)
+        self.assertIn(b"invented demo score", hidden_gems.data)
+
+        searched_sample = self.client.get("/workspace/hidden-gems?q=Moonfern")
+        self.assertIn(b"Demo Moonfern Falls", searched_sample.data)
+        self.assertNotIn(b"Demo Cloudbreak Viewpoint", searched_sample.data)
+        filtered_sample = self.client.get(
+            "/workspace/hidden-gems?q=Demo&category=Waterfall"
+        )
+        self.assertIn(b"Demo Moonfern Falls", filtered_sample.data)
+        self.assertNotIn(b"Demo Whispering Sal Grove", filtered_sample.data)
 
 
 if __name__ == "__main__":

@@ -2154,6 +2154,33 @@ h1 {
   background: #fbfcf9;
 }
 
+.hidden-gem-sample-panel {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid #e6ebe3;
+}
+
+.hidden-gem-sample-panel > .eyebrow {
+  margin: 0 0 0.3rem;
+  color: #a45b35;
+}
+
+.hidden-gem-sample-panel > h3 {
+  margin: 0;
+  color: #344b3b;
+}
+
+.hidden-gem-sample-panel > p:not(.eyebrow) {
+  max-width: 760px;
+  color: #748176;
+  font-size: 0.68rem;
+  line-height: 1.6;
+}
+
+.hidden-gem-sample-card {
+  border-style: dashed;
+}
+
 .map-place-image {
   display: block;
   width: 100%;
@@ -4081,12 +4108,20 @@ h1 {
   font-size: 1rem;
 }
 
-.community-empty-state p:last-child {
+.community-empty-state > p:not(.eyebrow) {
   max-width: 520px;
   margin: 0.5rem 0 0;
   color: #748176;
   font-size: 0.68rem;
   line-height: 1.6;
+}
+
+.community-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 1rem;
 }
 
 .community-admin-summary {

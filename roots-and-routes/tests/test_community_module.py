@@ -102,6 +102,8 @@ class CommunityModuleTests(unittest.TestCase):
         self.assertIn(b"Tour guides", response.data)
         self.assertIn(b"Traditional food experiences", response.data)
         self.assertIn(b"Admin section", response.data)
+        self.assertIn(b"Browse cultural guides", response.data)
+        self.assertIn(b"Explore places on the map", response.data)
 
     def test_admin_key_gate_requires_configured_secret_and_is_csrf_protected(self) -> None:
         bad_key_response = self.client.post(

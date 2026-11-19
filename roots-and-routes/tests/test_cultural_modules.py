@@ -103,6 +103,7 @@ class CulturalModuleTests(unittest.TestCase):
                     response.data,
                 )
         events_page = self.client.get("/workspace/cultural-events")
+        self.assertIn(b'id="event-search"', events_page.data)
         for category in CULTURAL_EVENT_CATEGORIES:
             self.assertIn(f'value="{category}"'.encode(), events_page.data)
         self.assertIn(b"Synthetic prototype dataset", events_page.data)
@@ -124,6 +125,19 @@ class CulturalModuleTests(unittest.TestCase):
         self.assertEqual(event["venue"], "Verified community venue")
         self.assertEqual(event["source_url"], "https://tourism.jharkhand.gov.in/festivals")
         self.assertEqual(event["distance_km"], 0)
+
+        harvest = self.event_record(event_id="harvest-demo")
+        harvest["name"] = "Harvest Loom Sample"
+        other = self.event_record(event_id="music-demo", category="karma")
+        other["name"] = "Evening Music Sample"
+        self.write_events([harvest, other])
+        searched = self.client.get("/api/cultural-events?q=loom")
+        self.assertEqual(
+            [item["event_id"] for item in searched.get_json()["events"]],
+            ["harvest-demo"],
+        )
+        too_long = self.client.get(f"/api/cultural-events?q={'x' * 121}")
+        self.assertEqual(too_long.status_code, 400)
 
     def test_event_service_filters_expired_and_distant_records(self) -> None:
         today = date(2026, 1, 1)
@@ -154,6 +168,16 @@ class CulturalModuleTests(unittest.TestCase):
         )
         self.assertEqual([event["event_id"] for event in events], ["sarhul-ranchi"])
         self.assertGreater(events[0]["distance_km"], 0)
+
+    def test_bundled_fictional_event_samples_support_text_search(self) -> None:
+        sample_path = Path(__file__).resolve().parents[1] / "data" / "cultural_events.csv"
+        events = get_cultural_events(
+            sample_path,
+            query="Sohrai Craft",
+            today=date(2026, 11, 19),
+        )
+        self.assertEqual([event["event_id"] for event in events], ["demo-sohrai-craft-2027"])
+        self.assertTrue(events[0]["is_synthetic"])
 
     def test_incomplete_or_unsecured_event_sources_are_rejected(self) -> None:
         incomplete = self.event_record()
