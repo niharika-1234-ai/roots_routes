@@ -16,15 +16,6 @@
       <input type="search" name="q" value="{{ query|default('') }}" placeholder="Search destinations..." aria-label="Search destinations">
       <kbd>↵</kbd>
     </form>
-    <div class="notification-wrap">
-      <button class="icon-button notification-button" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="notification-panel" data-notification-toggle>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
-      </button>
-      <div class="notification-panel" id="notification-panel" hidden>
-        <strong>You’re all caught up</strong>
-        <p>Travel updates and saved-trip reminders will appear here.</p>
-      </div>
-    </div>
     <a class="topbar-profile" href="{{ url_for('web.workspace', slug='profile') }}" aria-label="Open profile for {{ user.full_name }}">
       <span class="avatar">{{ user.full_name[:1]|upper }}</span>
       <span class="topbar-profile-copy"><strong>{{ user.full_name }}</strong><small>Traveller</small></span>

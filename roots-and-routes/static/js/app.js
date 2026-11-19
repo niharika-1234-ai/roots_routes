@@ -146,11 +146,14 @@ function setupRouteControls() {
 
   for (const role of ["source", "destination"]) {
     const input = document.querySelector(`#route-${role}`);
+    if (!input) {
+      continue;
+    }
     input.addEventListener("input", () => handleLocationInput(role));
     input.addEventListener("change", () => resolveCatalogueInput(role));
 
     const searchButton = document.querySelector(`[data-geocode="${role}"]`);
-    searchButton.addEventListener("click", () => searchLocation(role, searchButton));
+    searchButton?.addEventListener("click", () => searchLocation(role, searchButton));
   }
 
   window.addEventListener("roots-routes:set-map-location", (event) => {
@@ -187,11 +190,10 @@ function setupRouteControls() {
     setStatus(document.querySelector("#route-status"), "Current location cleared from the map.");
   });
 
-  form.addEventListener("submit", (event) => {
+  form?.addEventListener("submit", (event) => {
     event.preventDefault();
-    calculateRoute();
   });
-  destinationSelect.addEventListener("change", () => {
+  destinationSelect?.addEventListener("change", () => {
     const destination = mapState.destinationsById.get(destinationSelect.value);
     if (destination) {
       selectCatalogueDestination(destination);
@@ -202,7 +204,7 @@ function setupRouteControls() {
       updateNearbyButtons();
     }
   });
-  swapButton.addEventListener("click", swapLocations);
+  swapButton?.addEventListener("click", swapLocations);
   for (const button of nearbyButtons) {
     button.addEventListener("click", () => loadNearbyPlaces(button));
   }
@@ -280,12 +282,18 @@ function catalogueLocation(destination) {
 
 function setResolvedLocation(role, location) {
   mapState.locations[role] = location;
-  document.querySelector(`#route-${role}`).value = location.label;
+  const routeInput = document.querySelector(`#route-${role}`);
+  if (routeInput) {
+    routeInput.value = location.label;
+  }
   window.dispatchEvent(new CustomEvent("roots-routes:map-location-changed", {
     detail: { role, label: location.label },
   }));
-  document.querySelector(`#location-results-${role}`).replaceChildren();
-  document.querySelector(`#location-results-${role}`).hidden = true;
+  const locationResults = document.querySelector(`#location-results-${role}`);
+  if (locationResults) {
+    locationResults.replaceChildren();
+    locationResults.hidden = true;
+  }
   if (role === "destination") {
     const matchingDestination = location.destinationId
       ? location.destinationId
@@ -593,7 +601,7 @@ async function loadNearbyPlaces(button) {
   const status = document.querySelector("#nearby-status");
   const categoryButtons = [...document.querySelectorAll("[data-nearby-category]")];
   categoryButtons.forEach((item) => { item.disabled = true; });
-  setStatus(status, `Searching OpenStreetMap for nearby ${category}…`, false, true);
+  setStatus(status, `Searching nearby ${category === "hotels" ? "hotels and stays" : category}…`, false, true);
   mapState.lastNearbyCategory = category;
   categoryButtons.forEach((item) => {
     item.setAttribute("aria-pressed", String(item === button));
@@ -633,7 +641,7 @@ async function loadNearbyPlaces(button) {
     setStatus(
       status,
       visibleCount
-        ? `${visibleCount} mapped place${visibleCount === 1 ? "" : "s"} found within 5 km.`
+        ? `${visibleCount} nearby place${visibleCount === 1 ? "" : "s"} found within 5 km, including labelled sample data.`
         : response.places.length
           ? "No mapped listings match the selected category filter."
           : `No named ${categoryLabel} were found within 5 km in the available OpenStreetMap data.`,
@@ -682,8 +690,8 @@ async function loadCulturalEvents(nearbyOnly) {
     setStatus(
       status,
       events.length
-        ? `${events.length} scheduled event${events.length === 1 ? "" : "s"} with verified dates and sources${locationDescription}.`
-        : `No scheduled cultural events with verified dates, venues, and sources${locationDescription}.`,
+        ? `${events.length} synthetic demo event${events.length === 1 ? "" : "s"} — not confirmed public schedules${locationDescription}.`
+        : `No cultural event demo records${locationDescription}.`,
     );
   } catch (error) {
     setStatus(status, error.message || "Verified cultural events could not be loaded.", true);
@@ -761,19 +769,16 @@ function renderFilteredNearbyPlaces() {
     }
     const description = document.createElement("p");
     description.textContent = place.details || place.place_type || place.category;
-    const directions = document.createElement("button");
-    directions.type = "button";
-    directions.className = "map-place-directions";
-    directions.textContent = "Directions";
-    directions.addEventListener("click", () => routeToPlace(place));
     const source = document.createElement("a");
     source.href = place.source_url;
     source.target = "_blank";
     source.rel = "noopener noreferrer";
-    source.textContent = "OpenStreetMap record";
+    source.textContent = place.is_synthetic
+      ? "Synthetic sample record · not live availability"
+      : "OpenStreetMap record";
     item.append(title, description, metadata);
     appendPlaceLinks(item, place);
-    item.append(directions, source);
+    item.append(source);
     list.append(item);
 
     if (mapState.nearbyMarkers) {
@@ -856,12 +861,7 @@ function createPlacePopup(place) {
   const popup = document.createElement("div");
   const title = document.createElement("strong");
   title.textContent = place.name;
-  const directions = document.createElement("button");
-  directions.type = "button";
-  directions.className = "map-popup-action";
-  directions.textContent = "Directions";
-  directions.addEventListener("click", () => routeToPlace(place));
-  popup.append(title, document.createElement("br"), directions);
+  popup.append(title);
   return popup;
 }
 
@@ -885,7 +885,12 @@ function renderCulturalEvents(events) {
     category.className = "event-category-pill";
     category.textContent = event.category_label;
     const dateLine = document.createElement("p");
-    dateLine.textContent = `Verified date: ${formatEventDate(event.start_date, event.end_date)}`;
+    dateLine.textContent = event.is_synthetic
+      ? `Illustrative date: ${formatEventDate(event.start_date, event.end_date)}`
+      : `Verified date: ${formatEventDate(event.start_date, event.end_date)}`;
+    if (event.is_synthetic) {
+      dateLine.classList.add("event-synthetic-date");
+    }
     const venue = document.createElement("p");
     venue.textContent = `${event.venue} · ${event.district}`;
     const description = document.createElement("p");
@@ -901,13 +906,10 @@ function renderCulturalEvents(events) {
     source.href = event.source_url;
     source.target = "_blank";
     source.rel = "noopener noreferrer";
-    source.textContent = `${event.source_name} (${event.source_type}) · verified ${event.verified_on}`;
-    const directions = document.createElement("button");
-    directions.type = "button";
-    directions.className = "map-place-directions";
-    directions.textContent = "Directions";
-    directions.addEventListener("click", () => routeToPlace(event));
-    item.append(title, category, dateLine, venue, description, metadata, source, directions);
+    source.textContent = event.is_synthetic
+      ? `SYNTHETIC DEMO · ${event.source_name} · ${event.verification_note}`
+      : `${event.source_name} (${event.source_type}) · verified ${event.verified_on}`;
+    item.append(title, category, dateLine, venue, description, metadata, source);
     list.append(item);
 
     if (window.L && mapState.nearbyMarkers) {
@@ -1031,6 +1033,9 @@ function formatDuration(seconds) {
 }
 
 function setStatus(element, message, isError = false, isLoading = false) {
+  if (!element) {
+    return;
+  }
   if (!element) {
     return;
   }

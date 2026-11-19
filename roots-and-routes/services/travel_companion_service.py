@@ -65,6 +65,8 @@ def answer_travel_question(
     llm_api_key: str = "",
     llm_endpoint: str = "",
     llm_model: str = "",
+    allow_trip_ai: bool = False,
+    user_trip_constraints: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if any(
         phrase in message.casefold()
@@ -89,6 +91,8 @@ def answer_travel_question(
         overpass_url,
         user_agent,
     )
+    if allow_trip_ai and intent == "trip" and evidence.get("destinations"):
+        can_use_llm = True
     mode = "rules"
     if llm_api_key and can_use_llm:
         try:
@@ -99,6 +103,7 @@ def answer_travel_question(
                 llm_api_key,
                 llm_endpoint,
                 llm_model,
+                user_trip_constraints if intent == "trip" else None,
             )
             mode = "ai"
         except LLMServiceError as error:
@@ -535,12 +540,23 @@ def _rule_based_answer(
         evidence["destinations"] = [_destination_evidence(item) for item in candidates]
         sources = _destination_sources(candidates)
         if candidates:
-            outline = "\n".join(
-                f"Day {index}: {destination.name} — {destination.district} district."
-                for index, destination in enumerate(candidates, start=1)
-            )
+            outline_lines = []
+            for index in range(days):
+                if index < len(candidates):
+                    destination = candidates[index]
+                    outline_lines.append(
+                        f"Day {index + 1}: {destination.name} — "
+                        f"{destination.district} district."
+                    )
+                else:
+                    outline_lines.append(
+                        f"Day {index + 1}: Flexible day based around "
+                        f"{candidates[0].name}; check local access and options."
+                    )
+            outline = "\n".join(outline_lines)
             plan_note = (
-                f"This is a destinations-only draft for {days} days, not a route-optimized plan."
+                f"This is a destinations-only draft for {days} days, not a "
+                "route-optimized plan."
             )
         else:
             outline = ""
@@ -653,6 +669,7 @@ def _request_llm_answer(
     api_key: str,
     endpoint: str,
     model: str,
+    user_trip_constraints: dict[str, Any] | None = None,
 ) -> str:
     try:
         parsed_url = urlsplit(endpoint)
@@ -672,6 +689,8 @@ def _request_llm_answer(
         "grounded_draft": grounded_draft,
         "verified_evidence": evidence,
     }
+    if user_trip_constraints is not None:
+        prompt_data["user_trip_constraints"] = user_trip_constraints
     request_body = json.dumps(
         {
             "model": model,
@@ -687,6 +706,11 @@ def _request_llm_answer(
                         "availability, or destination facts. Preserve every limitation and "
                         "uncertainty in the draft. If evidence is missing, say so plainly. "
                         "Do not claim a trip fits a budget unless the evidence proves it. "
+                        "For itinerary drafts, only organize the supplied destinations by day; "
+                        "do not invent activities, route order, travel durations, or costs. "
+                        "Treat supplied trip constraints as user-provided preferences, not "
+                        "verified facts. Keep illustrative estimates clearly distinct from "
+                        "verified prices. "
                         "Do not add facts that are absent from the draft."
                     ),
                 },

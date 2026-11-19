@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Cultural Explorer · ROOTS &amp; ROUTES{% endblock %}
+{% block body_class %}cultural-public-body{% endblock %}
+
+{% block content %}
+  <div class="cultural-public-shell">
+    <header class="cultural-public-heading">
+      <p class="eyebrow">JHARKHAND · QR CULTURAL EXPLORER</p>
+      <h1>Stories rooted in place</h1>
+      <p>Source-linked guides to selected cultural destinations. Scan a destination QR code or open a guide below.</p>
+      {% if user %}
+        <a class="text-link" href="{{ url_for('web.workspace', slug='cultural-explorer') }}">Open Cultural Explorer workspace <span aria-hidden="true">→</span></a>
+      {% else %}
+        <a class="text-link" href="{{ url_for('web.login') }}">Sign in to open the full travel workspace <span aria-hidden="true">→</span></a>
+      {% endif %}
+    </header>
+
+    <section class="cultural-guide-grid" aria-label="Cultural destination guides">
+      {% for destination in cultural_destinations %}
+        <article class="workspace-panel cultural-guide-card">
+          {% if destination.cultural_photos %}
+            {% set photo = destination.cultural_photos[0] %}
+            <figure class="cultural-guide-photo">
+              <img src="{{ photo.url }}" alt="{{ photo.alt_text }}" loading="lazy">
+              <figcaption>
+                <a href="{{ photo.source_url }}" target="_blank" rel="noopener noreferrer">{{ photo.attribution }}</a>
+                ·
+                {% if photo.license_url %}
+                  <a href="{{ photo.license_url }}" target="_blank" rel="noopener noreferrer">{{ photo.license }}</a>
+                {% else %}
+                  {{ photo.license }}
+                {% endif %}
+              </figcaption>
+            </figure>
+          {% endif %}
+          <div class="cultural-guide-card-copy">
+            <p class="destination-location">{{ destination.district }} · Jharkhand</p>
+            <h2>{{ destination.name }}</h2>
+            <p>{{ destination.introduction }}</p>
+            <a class="button button-green" href="{{ url_for('web.cultural_destination', slug=destination.slug) }}">Open cultural guide</a>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+
+    <footer class="dashboard-footer">
+      <span>ROOTS &amp; ROUTES <span aria-hidden="true">·</span> Cultural context with source links.</span>
+      <span>QR guides only; augmented reality is not implemented.</span>
+    </footer>
+  </div>
+{% endblock %}

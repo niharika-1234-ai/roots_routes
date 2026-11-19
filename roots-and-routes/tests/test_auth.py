@@ -135,6 +135,13 @@ class AuthenticationFlowTests(unittest.TestCase):
         self.assertIn(b"Welcome back, Asha.", dashboard.data)
         self.assertIn(b"Recent itineraries", dashboard.data)
         self.assertIn(b"Sustainability overview", dashboard.data)
+        self.assertEqual(dashboard.data.count(b'class="nav-group"'), 3)
+        for item in NAV_ITEMS:
+            if item["slug"] is not None:
+                self.assertIn(
+                    f'href="/workspace/{item["slug"]}"'.encode(),
+                    dashboard.data,
+                )
         self.assertNotIn(b'href="#"', dashboard.data)
 
         for item in NAV_ITEMS:
@@ -144,6 +151,7 @@ class AuthenticationFlowTests(unittest.TestCase):
                 response = self.client.get(f"/workspace/{item['slug']}")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(escape(item["label"]).encode(), response.data)
+                self.assertIn(b'<details class="nav-group" open>', response.data)
                 self.assertNotIn(b'href="#"', response.data)
 
         filtered = self.client.get("/workspace/explore-destinations?q=Hundru")

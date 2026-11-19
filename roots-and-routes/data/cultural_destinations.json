@@ -1,0 +1,106 @@
+{
+  "destinations": [
+    {
+      "slug": "baidyanath-dham",
+      "name": "Baba Baidyanath Dham Temple",
+      "district": "Deoghar",
+      "introduction": "A source-linked guide to the Baidyanath Jyotirlinga Temple in Deoghar.",
+      "historical_background": {
+        "text": "The Deoghar district administration describes Baidyanath Jyotirlinga Temple, also called Baidyanath Dham, as one of India's twelve Jyotirlingas and a sacred abode of Shiva. This is a religious tradition, not a claim about a verified construction date.",
+        "source_name": "Deoghar District Administration",
+        "source_url": "https://deoghar.nic.in/tourist-place/baidyanath-temple/"
+      },
+      "tribal_traditions": {
+        "text": "No tradition specific to this temple has been verified for this guide. Jharkhand Tourism describes tribal and folk dance as part of the state's wider multi-ethnic cultural life; that statewide context is not attributed here to the temple or its visitors.",
+        "source_name": "Jharkhand Tourism",
+        "source_url": "https://tourism.jharkhand.gov.in/"
+      },
+      "local_art": {
+        "available": false,
+        "text": "No destination-specific local art record has been verified for this guide.",
+        "source_name": null,
+        "source_url": null
+      },
+      "festivals": {
+        "text": "The Deoghar district tourism site includes Shrawani Mela in its tourism video gallery. This guide does not provide current event dates, routes, access conditions, or crowd information.",
+        "source_name": "Deoghar District Administration",
+        "source_url": "https://deoghar.nic.in/tourist-places/"
+      },
+      "cultural_photos": [
+        {
+          "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Baidyanath_temple_and_temple_complex%2C_Deoghar_09.jpg/960px-Baidyanath_temple_and_temple_complex%2C_Deoghar_09.jpg",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Baidyanath_temple_and_temple_complex,_Deoghar_09.jpg",
+          "alt_text": "Baidyanath Temple and temple complex in Deoghar",
+          "attribution": "Pinakpani",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0/"
+        }
+      ],
+      "audio_description": null,
+      "experience_extensions": {
+        "ar": []
+      },
+      "sources": [
+        {
+          "name": "Baba Baidyanath Dham Temple — Deoghar District Administration",
+          "url": "https://deoghar.nic.in/tourist-place/baidyanath-temple/"
+        },
+        {
+          "name": "Tourist Places — Deoghar District Administration",
+          "url": "https://deoghar.nic.in/tourist-places/"
+        },
+        {
+          "name": "Jharkhand Tourism",
+          "url": "https://tourism.jharkhand.gov.in/"
+        }
+      ]
+    },
+    {
+      "slug": "parasnath",
+      "name": "Parasnath Hills (Sammed Shikhar)",
+      "district": "Giridih",
+      "introduction": "A source-linked guide to the religious and cultural traditions associated with Parasnath Hills.",
+      "historical_background": {
+        "text": "The Giridih district administration identifies Parasnath Hills as an important Jain pilgrimage centre, called Sammed Sikhar by Jains. Its page records the Jain belief that twenty Tirthankaras attained salvation on the hill and notes that some temples are believed to be more than 2,000 years old, while cautioning that temple origins may be more recent.",
+        "source_name": "Giridih District Administration",
+        "source_url": "https://giridih.nic.in/tourist-place/parasnath/"
+      },
+      "tribal_traditions": {
+        "text": "The Giridih district administration records that Santhals call the hill Marang Buru, the hill of the deity, and celebrate a hunting festival on the full moon day in Baisakh. The page gives no current-year event schedule; visitors should respect local community guidance and customs.",
+        "source_name": "Giridih District Administration",
+        "source_url": "https://giridih.nic.in/tourist-place/parasnath/"
+      },
+      "local_art": {
+        "available": false,
+        "text": "No destination-specific local art record has been verified for this guide.",
+        "source_name": null,
+        "source_url": null
+      },
+      "festivals": {
+        "text": "The Giridih district administration describes a Santhal hunting festival held on the full moon day in Baisakh. This is cultural context, not a published event listing or visitor invitation; confirm local guidance before planning a visit.",
+        "source_name": "Giridih District Administration",
+        "source_url": "https://giridih.nic.in/tourist-place/parasnath/"
+      },
+      "cultural_photos": [
+        {
+          "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/Shikharji_Parasnath_Giridih.jpg/960px-Shikharji_Parasnath_Giridih.jpg",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Shikharji_Parasnath_Giridih.jpg",
+          "alt_text": "View of Shikharji in the Parasnath Hills",
+          "attribution": "CaptVijay",
+          "license": "Public domain",
+          "license_url": null
+        }
+      ],
+      "audio_description": null,
+      "experience_extensions": {
+        "ar": []
+      },
+      "sources": [
+        {
+          "name": "Parasnath — Giridih District Administration",
+          "url": "https://giridih.nic.in/tourist-place/parasnath/"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import tempfile
 import unittest
 from datetime import date, timedelta
@@ -8,6 +9,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from app import create_app
+from services.cultural_explorer_service import (
+    cultural_destination_url,
+    get_cultural_destinations,
+)
 from services.event_service import (
     CULTURAL_EVENT_CATEGORIES,
     CulturalEventDataError,
@@ -100,7 +105,8 @@ class CulturalModuleTests(unittest.TestCase):
         events_page = self.client.get("/workspace/cultural-events")
         for category in CULTURAL_EVENT_CATEGORIES:
             self.assertIn(f'value="{category}"'.encode(), events_page.data)
-        self.assertIn(b"Jharkhand Tourism festival information", events_page.data)
+        self.assertIn(b"Synthetic prototype dataset", events_page.data)
+        self.assertIn(b"synthetic prototype data", events_page.data)
 
     def test_events_api_validates_filters_and_returns_only_curated_records(self) -> None:
         invalid_category = self.client.get("/api/cultural-events?category=unverified")
@@ -155,6 +161,75 @@ class CulturalModuleTests(unittest.TestCase):
         self.write_events([incomplete])
         with self.assertRaises(CulturalEventDataError):
             get_cultural_events(self.events_path)
+
+    def test_public_cultural_guides_show_sources_and_explicit_unavailable_states(self) -> None:
+        index_response = self.client.get("/culture")
+        self.assertEqual(index_response.status_code, 200)
+        self.assertIn(b"Baba Baidyanath Dham Temple", index_response.data)
+        self.assertIn(b"Parasnath Hills", index_response.data)
+
+        baidyanath_response = self.client.get("/culture/baidyanath-dham")
+        self.assertEqual(baidyanath_response.status_code, 200)
+        self.assertIn(b"Historical background", baidyanath_response.data)
+        self.assertIn(b"Tribal traditions", baidyanath_response.data)
+        self.assertIn(b"Local art", baidyanath_response.data)
+        self.assertIn(b"No destination-specific local art record has been verified", baidyanath_response.data)
+        self.assertIn(b"No verified audio description is available yet", baidyanath_response.data)
+        self.assertIn(b"Augmented reality is not implemented", baidyanath_response.data)
+        self.assertIn(b"deoghar.nic.in/tourist-place/baidyanath-temple", baidyanath_response.data)
+        self.assertIn(b"CC BY 4.0", baidyanath_response.data)
+
+        parasnath_response = self.client.get("/culture/parasnath")
+        self.assertEqual(parasnath_response.status_code, 200)
+        self.assertIn(b"Marang Buru", parasnath_response.data)
+        self.assertIn(b"giridih.nic.in/tourist-place/parasnath", parasnath_response.data)
+        self.assertEqual(self.client.get("/culture/not-supported").status_code, 404)
+
+        self.register_user()
+        workspace_response = self.client.get("/workspace/cultural-explorer")
+        self.assertEqual(workspace_response.status_code, 200)
+        self.assertIn(b"Administrator QR generator", workspace_response.data)
+        self.assertIn(b"Open QR guide", workspace_response.data)
+
+    def test_cultural_content_is_sourced_and_qr_urls_require_a_canonical_origin(self) -> None:
+        destinations = get_cultural_destinations(
+            Path(__file__).resolve().parents[1] / "data" / "cultural_destinations.json"
+        )
+        self.assertTrue(all(destination["sources"] for destination in destinations))
+        self.assertEqual(
+            cultural_destination_url("baidyanath-dham", "https://travel.example.org"),
+            "https://travel.example.org/culture/baidyanath-dham",
+        )
+        self.assertEqual(
+            cultural_destination_url("parasnath", "http://127.0.0.1:5000"),
+            "http://127.0.0.1:5000/culture/parasnath",
+        )
+        for invalid_base in (
+            "http://travel.example.org",
+            "https://user:password@travel.example.org",
+            "https://travel.example.org/path",
+        ):
+            with self.subTest(invalid_base=invalid_base):
+                with self.assertRaises(ValueError):
+                    cultural_destination_url("baidyanath-dham", invalid_base)
+
+    def test_available_audio_description_has_playback_and_transcript(self) -> None:
+        content_path = Path(self.temp_directory.name) / "cultural_destinations.json"
+        source_path = Path(__file__).resolve().parents[1] / "data" / "cultural_destinations.json"
+        content = json.loads(source_path.read_text(encoding="utf-8"))
+        content["destinations"][0]["audio_description"] = {
+            "audio_url": "https://media.example.org/baidyanath-guide.mp3",
+            "source_name": "Verified cultural guide audio",
+            "source_url": "https://media.example.org/attribution",
+            "transcript": "An accessible transcript for the audio guide.",
+        }
+        content_path.write_text(json.dumps(content), encoding="utf-8")
+        self.app.config["CULTURAL_DESTINATIONS_PATH"] = content_path
+
+        response = self.client.get("/culture/baidyanath-dham")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"<audio controls", response.data)
+        self.assertIn(b"An accessible transcript for the audio guide.", response.data)
 
         unsecured = self.event_record()
         unsecured["source_url"] = "http://example.org/event"
@@ -256,6 +331,94 @@ class NearbyPlaceEnrichmentTests(unittest.TestCase):
         self.assertEqual(by_name["Budget Tagged Hotel"]["place_type"], "Hotel")
         self.assertTrue(by_name["Budget Tagged Hotel"]["budget_tagged"])
         self.assertTrue(all(not place["price"] and not place["rating"] for place in places))
+
+
+class CulturalQrAdminTests(unittest.TestCase):
+    ADMIN_KEY = "cultural-admin-test-key-" + ("x" * 32)
+
+    def setUp(self) -> None:
+        self.temp_directory = tempfile.TemporaryDirectory()
+        self.app = create_app(
+            {
+                "TESTING": True,
+                "SECRET_KEY": "test-session-secret",
+                "DATABASE_PATH": str(Path(self.temp_directory.name) / "test.sqlite3"),
+                "COMMUNITY_ADMIN_KEY": self.ADMIN_KEY,
+                "PUBLIC_BASE_URL": "https://travel.example.org",
+            }
+        )
+        self.client = self.app.test_client()
+
+    def tearDown(self) -> None:
+        self.temp_directory.cleanup()
+
+    def register_user(self) -> None:
+        self.client.get("/register")
+        with self.client.session_transaction() as browser_session:
+            token = browser_session["_csrf_token"]
+        response = self.client.post(
+            "/register",
+            data={
+                "csrf_token": token,
+                "full_name": "Asha Munda",
+                "email": "qr-admin@example.com",
+            },
+        )
+        self.assertIn(response.status_code, (302, 303))
+
+    def test_qr_generator_requires_admin_session_and_uses_configured_public_url(self) -> None:
+        self.assertEqual(self.client.get("/cultural/admin").status_code, 302)
+        self.register_user()
+        self.assertEqual(
+            self.client.get("/cultural/admin/qr/baidyanath-dham.svg").status_code,
+            302,
+        )
+        admin_page = self.client.get("/cultural/admin")
+        self.assertEqual(admin_page.status_code, 200)
+        self.assertIn(b"RESTRICTED AREA", admin_page.data)
+        with self.client.session_transaction() as browser_session:
+            token = browser_session["_csrf_token"]
+
+        unlock_response = self.client.post(
+            "/cultural/admin/unlock",
+            data={"csrf_token": token, "admin_key": self.ADMIN_KEY},
+        )
+        self.assertEqual(unlock_response.status_code, 302)
+        self.assertIn(b"Download SVG", self.client.get("/cultural/admin").data)
+
+        with patch(
+            "routes.web.cultural_destination_url",
+            wraps=cultural_destination_url,
+        ) as build_url:
+            qr_response = self.client.get(
+                "/cultural/admin/qr/baidyanath-dham.svg"
+            )
+        self.assertEqual(qr_response.status_code, 200)
+        self.assertEqual(qr_response.mimetype, "image/svg+xml")
+        self.assertIn(b"<svg", qr_response.data)
+        self.assertEqual(qr_response.headers["Cache-Control"], "private, no-store")
+        build_url.assert_called_once_with(
+            "baidyanath-dham",
+            "https://travel.example.org",
+        )
+
+        download_response = self.client.get(
+            "/cultural/admin/qr/baidyanath-dham.svg?download=1"
+        )
+        self.assertIn("attachment", download_response.headers["Content-Disposition"])
+
+    def test_qr_generation_fails_clearly_without_public_base_url(self) -> None:
+        self.register_user()
+        self.client.get("/cultural/admin")
+        with self.client.session_transaction() as browser_session:
+            token = browser_session["_csrf_token"]
+        self.client.post(
+            "/cultural/admin/unlock",
+            data={"csrf_token": token, "admin_key": self.ADMIN_KEY},
+        )
+        self.app.config["PUBLIC_BASE_URL"] = ""
+        response = self.client.get("/cultural/admin/qr/parasnath.svg")
+        self.assertEqual(response.status_code, 503)
 
 
 if __name__ == "__main__":

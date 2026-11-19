@@ -5,6 +5,8 @@ import math
 import re
 import threading
 import time
+import csv
+from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urlsplit
@@ -167,12 +169,15 @@ def get_nearby_places(
         )
         query = f"[out:json][timeout:12];\n(\n{selector_query}\n);\nout center tags 30;"
         body = urlencode({"data": query}).encode("utf-8")
-        payload = _request_json(
-            endpoint,
-            user_agent=user_agent,
-            timeout=15,
-            body=body,
-        )
+        try:
+            payload = _request_json(
+                endpoint,
+                user_agent=user_agent,
+                timeout=15,
+                body=body,
+            )
+        except MapServiceError:
+            payload = None
 
         places = []
         if isinstance(payload, dict) and isinstance(payload.get("elements"), list):
@@ -230,12 +235,66 @@ def get_nearby_places(
                         "source_url": f"https://www.openstreetmap.org/{osm_type}/{osm_id}",
                     }
                 )
+        if category in {"restaurants", "hotels"}:
+            sample_places = _sample_nearby_places(category, latitude, longitude)
+            if not places:
+                places.extend(sample_places)
         places.sort(key=lambda place: place["distance_km"])
         if cacheable:
             _nearby_cache[cache_key] = (time.monotonic() + 300, places)
             if len(_nearby_cache) > 256:
                 _nearby_cache.pop(next(iter(_nearby_cache)))
         return [dict(place) for place in places]
+
+
+def _sample_nearby_places(
+    category: str,
+    latitude: float,
+    longitude: float,
+) -> list[dict[str, Any]]:
+    sample_path = Path(__file__).resolve().parents[1] / "data" / "sample_nearby_places.csv"
+    try:
+        with sample_path.open(encoding="utf-8-sig", newline="") as sample_file:
+            rows = list(csv.DictReader(sample_file))
+    except (OSError, UnicodeError, csv.Error):
+        return []
+
+    places = []
+    for row in rows:
+        if str(row.get("category", "")).strip() != category:
+            continue
+        try:
+            place_latitude = float(row["latitude"])
+            place_longitude = float(row["longitude"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        distance = distance_km(latitude, longitude, place_latitude, place_longitude)
+        budget_tagged = str(row.get("budget_tagged", "0")).strip() == "1"
+        places.append(
+            {
+                "name": str(row.get("name", "")).strip(),
+                "category": category,
+                "place_type": str(row.get("place_type", "")).strip(),
+                "latitude": place_latitude,
+                "longitude": place_longitude,
+                "distance_km": round(distance, 2),
+                "cuisine": str(row.get("cuisine", "")).strip(),
+                "rating": str(row.get("rating", "")).strip(),
+                "stars": str(row.get("stars", "")).strip(),
+                "price_label": str(row.get("price_label", "")).strip(),
+                "price": str(row.get("price", "")).strip(),
+                "budget_tagged": budget_tagged,
+                "image_url": "",
+                "image_source_url": "",
+                "website_url": "",
+                "booking_url": "",
+                "details": str(row.get("details", "")).strip(),
+                "source_url": str(row.get("source_url", "")).strip(),
+                "is_synthetic": True,
+            }
+        )
+    places.sort(key=lambda place: place["distance_km"])
+    return places[:4]
 
 
 def _request_json(

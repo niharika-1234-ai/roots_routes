@@ -36,7 +36,9 @@ def init_db() -> None:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
                     destination_ids TEXT NOT NULL DEFAULT '[]',
-                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    itinerary_json TEXT NOT NULL DEFAULT '{}'
                 );
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,6 +46,39 @@ def init_db() -> None:
                     email TEXT NOT NULL UNIQUE,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
+                CREATE TABLE IF NOT EXISTS passport_qr_codes (
+                    id TEXT PRIMARY KEY,
+                    destination_id TEXT NOT NULL,
+                    destination_name TEXT NOT NULL,
+                    token_hash TEXT NOT NULL UNIQUE,
+                    issued_by_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    issued_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    revoked_at TEXT
+                );
+                CREATE TABLE IF NOT EXISTS passport_visits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    destination_id TEXT NOT NULL,
+                    destination_name TEXT NOT NULL,
+                    district TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    visited_on TEXT NOT NULL,
+                    verification_method TEXT NOT NULL CHECK (
+                        verification_method IN ('self_reported', 'verified_qr')
+                    ),
+                    qr_code_id TEXT REFERENCES passport_qr_codes(id),
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (user_id, destination_id, visited_on),
+                    CHECK (
+                        (verification_method = 'verified_qr' AND qr_code_id IS NOT NULL)
+                        OR (verification_method = 'self_reported' AND qr_code_id IS NULL)
+                    )
+                );
+                CREATE INDEX IF NOT EXISTS passport_visits_user_date
+                    ON passport_visits (user_id, visited_on DESC, created_at DESC);
+                CREATE INDEX IF NOT EXISTS passport_visits_user_destination
+                    ON passport_visits (user_id, destination_id);
                 CREATE TABLE IF NOT EXISTS community_providers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -118,6 +153,24 @@ def init_db() -> None:
                     ON community_providers (is_published, category, name);
                 CREATE INDEX IF NOT EXISTS community_enquiries_status_created
                     ON community_enquiries (status, created_at DESC);
+                """
+            )
+            saved_trip_columns = {
+                row[1]
+                for row in connection.execute("PRAGMA table_info(saved_trips)")
+            }
+            if "user_id" not in saved_trip_columns:
+                connection.execute(
+                    "ALTER TABLE saved_trips ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"
+                )
+            if "itinerary_json" not in saved_trip_columns:
+                connection.execute(
+                    "ALTER TABLE saved_trips ADD COLUMN itinerary_json TEXT NOT NULL DEFAULT '{}'"
+                )
+            connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS saved_trips_user_created
+                ON saved_trips (user_id, created_at DESC, id DESC)
                 """
             )
     finally:

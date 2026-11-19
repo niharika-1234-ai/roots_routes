@@ -17,6 +17,7 @@ function initializeSafetyTools() {
   const contactInput = document.querySelector("#safety-contact");
   const returnTimeInput = document.querySelector("#safety-return-time");
   const prepareButton = document.querySelector("#safety-prepare-draft");
+  const prepareSosButton = document.querySelector("#safety-prepare-sos");
   const clearDetailsButton = document.querySelector("#safety-clear-details");
   let currentLocation = null;
   const invalidateDraft = () => {
@@ -95,7 +96,10 @@ function initializeSafetyTools() {
   document.querySelector("#route-destination").addEventListener("input", invalidateDraft);
   window.addEventListener("roots-routes:map-location-changed", invalidateDraft);
 
-  prepareButton.addEventListener("click", () => {
+  prepareButton.addEventListener("click", () => prepareDraft(false));
+  prepareSosButton.addEventListener("click", () => prepareDraft(true));
+
+  function prepareDraft(isSos) {
     draftLink.hidden = true;
     draftLink.removeAttribute("href");
 
@@ -107,35 +111,47 @@ function initializeSafetyTools() {
       shareStatus.textContent = "Enter a valid email address or phone number for your trusted contact.";
       return;
     }
-    if (!destination) {
+    if (!isSos && !destination) {
       shareStatus.textContent = "Choose or search for a destination in the map route planner first.";
       return;
     }
-    if (!expectedReturn || Number.isNaN(new Date(expectedReturn).getTime())) {
+    if (!isSos && !expectedReturn) {
       shareStatus.textContent = "Set an expected return time for your check-in.";
       return;
     }
+    if (expectedReturn && Number.isNaN(new Date(expectedReturn).getTime())) {
+      shareStatus.textContent = "Enter a valid expected return time.";
+      return;
+    }
 
-    const lines = [
-      "ROOTS & ROUTES travel check-in",
-      `Route: ${source || "Not specified"} → ${destination}`,
-      `Expected return: ${new Date(expectedReturn).toLocaleString()}`,
-    ];
+    const lines = isSos
+      ? ["ROOTS & ROUTES SOS assistance", "I need help. Please contact me as soon as possible."]
+      : ["ROOTS & ROUTES travel check-in"];
+    if (destination) {
+      lines.push(`Route: ${source || "Not specified"} → ${destination}`);
+    }
+    if (expectedReturn) {
+      lines.push(`Expected return: ${new Date(expectedReturn).toLocaleString()}`);
+    }
     if (includeLocation.checked && currentLocation) {
       const { latitude, longitude } = currentLocation;
       const mapUrl = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`;
       lines.push(`My current location: ${mapUrl}`);
     }
-    lines.push("Please contact me if I miss this check-in.");
+    if (!isSos) {
+      lines.push("Please contact me if I miss this check-in.");
+    }
     const message = lines.join("\n");
     const isEmail = contact.includes("@");
     draftLink.href = isEmail
-      ? `mailto:${encodeURIComponent(contact).replace(/%40/gi, "@")}?subject=${encodeURIComponent("Travel check-in")}&body=${encodeURIComponent(message)}`
+      ? `mailto:${encodeURIComponent(contact).replace(/%40/gi, "@")}?subject=${encodeURIComponent(isSos ? "SOS assistance" : "Travel check-in")}&body=${encodeURIComponent(message)}`
       : `sms:${normalizePhoneNumber(contact)}?body=${encodeURIComponent(message)}`;
-    draftLink.textContent = `Open ${isEmail ? "email" : "SMS"} draft`;
+    draftLink.textContent = `Open ${isEmail ? "email" : "SMS"} ${isSos ? "SOS" : "check-in"} draft`;
     draftLink.hidden = false;
-    shareStatus.textContent = "Draft prepared. No message has been sent; open the draft and send it yourself. Delivery cannot be confirmed here.";
-  });
+    shareStatus.textContent = isSos
+      ? "SOS draft prepared. Nothing has been sent; review and send it in your own app. For immediate danger, call 112."
+      : "Draft prepared. No message has been sent; open the draft and send it yourself. Delivery cannot be confirmed here.";
+  }
 }
 
 function isEmailAddress(value) {

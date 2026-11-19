@@ -36,10 +36,12 @@ def create_app(test_config: dict | None = None) -> Flask:
             str(Path(app.instance_path) / "roots_and_routes.sqlite3"),
         ),
         DESTINATIONS_PATH=PROJECT_ROOT / "data" / "destinations.csv",
+        CULTURAL_DESTINATIONS_PATH=PROJECT_ROOT / "data" / "cultural_destinations.json",
         CULTURAL_EVENTS_PATH=PROJECT_ROOT / "data" / "cultural_events.csv",
         CROWD_HISTORY_PATH=PROJECT_ROOT / "data" / "crowd_history_sample.csv",
         TRANSPORT_EMISSION_FACTORS_PATH=emission_factors_path,
         COMMUNITY_ADMIN_KEY=os.environ.get("COMMUNITY_ADMIN_KEY", "").strip(),
+        PUBLIC_BASE_URL=os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/"),
         NOMINATIM_BASE_URL=os.environ.get(
             "NOMINATIM_BASE_URL",
             "https://nominatim.openstreetmap.org",
@@ -56,6 +58,7 @@ def create_app(test_config: dict | None = None) -> Flask:
             "OVERPASS_URL",
             "https://overpass-api.de/api/interpreter",
         ),
+        OPENWEATHER_API_KEY=os.environ.get("OPENWEATHER_API_KEY", "").strip(),
         TRAVEL_COMPANION_LLM_API_KEY=os.environ.get("OPENAI_API_KEY", "").strip(),
         TRAVEL_COMPANION_LLM_ENDPOINT=os.environ.get(
             "OPENAI_CHAT_COMPLETIONS_URL",

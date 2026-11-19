@@ -162,12 +162,24 @@
               <div><p class="eyebrow">YOUR JOURNEYS</p><h2>Recent itineraries</h2></div>
               <a class="text-link" href="{{ url_for('web.workspace', slug='my-itineraries') }}">View all <span aria-hidden="true">→</span></a>
             </div>
-            <div class="empty-itinerary">
-              <span class="empty-illustration" aria-hidden="true">↗</span>
-              <strong>Your next story starts somewhere.</strong>
-              <p>User-specific itinerary saving is not enabled in this prototype yet.</p>
-              <a class="button button-outline" href="{{ url_for('web.workspace', slug='my-itineraries') }}">Open my itineraries</a>
-            </div>
+            {% if recent_itineraries %}
+              <div class="dashboard-itinerary-list">
+                {% for saved_trip in recent_itineraries %}
+                  <a class="dashboard-itinerary-item" href="{{ url_for('web.workspace', slug='my-itineraries') }}">
+                    <span class="empty-illustration" aria-hidden="true">↗</span>
+                    <span><strong>{{ saved_trip.title }}</strong><small>{{ saved_trip.created_at }} · {{ saved_trip.destination_names|join(" · ") if saved_trip.destination_names else "Catalogue outline" }}</small></span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty-itinerary">
+                <span class="empty-illustration" aria-hidden="true">↗</span>
+                <strong>Your next story starts somewhere.</strong>
+                <p>Generate and save an itinerary draft to keep it here.</p>
+                <a class="button button-outline" href="{{ url_for('web.workspace', slug='ai-travel-planner') }}">Create an itinerary</a>
+              </div>
+            {% endif %}
           </article>
         </section>
 

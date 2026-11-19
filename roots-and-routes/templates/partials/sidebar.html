@@ -6,25 +6,30 @@
   </a>
 
   <nav class="sidebar-nav" aria-label="Main navigation">
-    {% set previous_group = namespace(value='') %}
-    {% for item in sidebar_items %}
-      {% if item.group != previous_group.value %}
-        <p class="nav-group-label">{{ item.group }}</p>
-        {% set previous_group.value = item.group %}
-      {% endif %}
-      {% set item_key = 'dashboard' if item.slug is none else item.slug %}
-      {% if item.slug is none %}
-        <a class="nav-link {{ 'is-active' if active_page == item_key else '' }}"
-           href="{{ url_for('web.dashboard') }}"
-           {% if active_page == item_key %}aria-current="page"{% endif %}>
-      {% else %}
-        <a class="nav-link {{ 'is-active' if active_page == item_key else '' }}"
-           href="{{ url_for('web.workspace', slug=item.slug) }}"
-           {% if active_page == item_key %}aria-current="page"{% endif %}>
-      {% endif %}
-          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
-          <span>{{ item.label }}</span>
-        </a>
+    {% for item in sidebar_items if item.slug is none %}
+      <a class="nav-link {{ 'is-active' if active_page == 'dashboard' else '' }}"
+         href="{{ url_for('web.dashboard') }}"
+         {% if active_page == 'dashboard' %}aria-current="page"{% endif %}>
+        <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </a>
+    {% endfor %}
+    {% for group_name in ['Discover', 'Plan & travel', 'Your space'] %}
+      {% set group_items = sidebar_items | selectattr('group', 'equalto', group_name) | list %}
+      <details class="nav-group" {% if group_items | selectattr('slug', 'equalto', active_page) | list %}open{% endif %}>
+        <summary class="nav-group-label">
+          <span>{{ group_name }}</span>
+          <span class="nav-group-chevron" aria-hidden="true"></span>
+        </summary>
+        {% for item in group_items %}
+          <a class="nav-link {{ 'is-active' if active_page == item.slug else '' }}"
+             href="{{ url_for('web.workspace', slug=item.slug) }}"
+             {% if active_page == item.slug %}aria-current="page"{% endif %}>
+            <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </a>
+        {% endfor %}
+      </details>
     {% endfor %}
   </nav>
 

@@ -14,7 +14,6 @@ NAV_ITEMS = [
     {"label": "Interactive Maps", "slug": "interactive-maps", "group": "Discover", "icon": "MP"},
     {"label": "Hidden Gems", "slug": "hidden-gems", "group": "Discover", "icon": "HG"},
     {"label": "Crowd Prediction", "slug": "crowd-prediction", "group": "Discover", "icon": "CP"},
-    {"label": "Carbon Footprint", "slug": "carbon-footprint", "group": "Discover", "icon": "CF"},
     {"label": "Community Connect", "slug": "community-connect", "group": "Plan & travel", "icon": "CC"},
     {"label": "Tourist Safety", "slug": "tourist-safety", "group": "Plan & travel", "icon": "TS"},
     {"label": "Weather Insights", "slug": "weather-insights", "group": "Plan & travel", "icon": "WI"},
@@ -38,11 +37,10 @@ WORKSPACE_PAGES: dict[str, dict[str, Any]] = {
         "note": "Ratings are not supplied without evidence. Coordinates and images link to their source records; confirm current travel conditions before visiting.",
     },
     "ai-travel-planner": {
-        "mode": "unavailable",
-        "description": "A trip-planning workspace for building considered journeys around your interests and constraints.",
-        "status": "Engine not connected",
-        "empty_title": "The planner engine is not connected",
-        "empty_message": "This project starter has no itinerary recommendation model or trip-saving workflow yet. No AI plan is generated here.",
+        "mode": "planner",
+        "description": "Turn trip constraints and an editable budget estimate into a grounded Jharkhand itinerary draft.",
+        "status": "Grounded itinerary draft",
+        "note": "The itinerary is a starting point, not a confirmed route or booking. It does not verify opening hours, access, travel times, availability, or that the trip fits your budget.",
     },
     "ai-travel-companion": {
         "mode": "companion",
@@ -52,9 +50,9 @@ WORKSPACE_PAGES: dict[str, dict[str, Any]] = {
     },
     "interactive-maps": {
         "mode": "map",
-        "description": "Find a place, calculate a real road route, and explore mapped nearby places.",
+        "description": "Find a place and explore mapped or synthetic nearby restaurants and stays.",
         "status": "Map available",
-        "note": "Routes use OSRM road-network data. Nominatim lookups run only when requested, not as-you-type; known destinations autocomplete locally. OSM place listings may be incomplete. Cultural events are separate from mapped event venues and are shown only with a verified schedule source.",
+        "note": "This map explores nearby places without road routing or transport calculations. Known destinations are loaded locally. OpenStreetMap listings may be incomplete; restaurant and hotel fallbacks are clearly labelled synthetic samples.",
     },
     "hidden-gems": {
         "mode": "hidden_gems",
@@ -68,12 +66,6 @@ WORKSPACE_PAGES: dict[str, dict[str, Any]] = {
         "status": "Illustrative sample · not live",
         "note": "All current values are synthetic sample indices, not observed visitors, live counts, or verified crowd predictions.",
     },
-    "carbon-footprint": {
-        "mode": "carbon",
-        "description": "Estimate operational travel emissions, compare transport modes, and review the factor sources behind each result.",
-        "status": "Estimate · sourced reference factors",
-        "note": "The default car, bus, and rail factors are UK Government 2026 reporting values used only as transparent proxies; they are not India-specific. Cycling and walking show zero direct operational emissions only, not zero lifecycle emissions.",
-    },
     "community-connect": {
         "mode": "community",
         "description": "Discover locally hosted experiences and send enquiries to providers whose listings have been reviewed.",
@@ -83,43 +75,46 @@ WORKSPACE_PAGES: dict[str, dict[str, Any]] = {
     "tourist-safety": {
         "mode": "map",
         "map_category": "safety",
-        "description": "Find official emergency contacts, prepare a private trip check-in, and view mapped hospitals and police stations.",
+        "description": (
+            "Find official emergency contacts, prepare a private trip check-in or SOS draft, "
+            "and view mapped hospitals and police stations."
+        ),
         "status": "Official contacts · mapped services",
         "note": "Emergency contacts link to official Jharkhand Police/ERSS sources. Nearby hospitals and police stations come from OpenStreetMap, may be incomplete or out of date, and are not an emergency dispatch service.",
     },
     "weather-insights": {
-        "mode": "unavailable",
-        "description": "A place for location-aware forecasts and seasonal travel conditions.",
-        "status": "Weather provider not connected",
-        "empty_title": "Live weather is not available",
-        "empty_message": "No weather service is configured, so this page does not display forecast data.",
+        "mode": "weather",
+        "description": "Check current conditions and a live forecast for a Jharkhand destination before you travel.",
+        "status": "Live forecast · OpenWeatherMap",
+        "note": (
+            "Weather comes from OpenWeatherMap's live API for the selected catalogue point. "
+            "Forecasts are not official warnings or confirmation of a destination's access "
+            "or safety; verify local advisories before travelling."
+        ),
     },
     "smart-budget": {
-        "mode": "unavailable",
+        "mode": "budget",
         "description": "A trip-cost workspace for comparing transport, stays, meals, and activities.",
-        "status": "Pricing data needed",
-        "empty_title": "No verified travel prices are available",
-        "empty_message": "The catalogue does not contain current transport, accommodation, or activity prices. No budget estimate is shown.",
+        "status": "Editable sample estimate",
+        "note": "Sample rates are illustrative assumptions, not verified prices or live quotes. Edit category totals to reflect your own research.",
     },
     "cultural-explorer": {
         "mode": "culture",
-        "description": "Explore catalogue entries currently tagged with cultural experiences.",
-        "status": "Evidence needed",
-        "note": "No destination has a sourced cultural-value rating in the current catalogue.",
+        "description": "Explore source-linked cultural guides for selected Jharkhand destinations.",
+        "status": "QR cultural guides",
+        "note": "Cultural details are linked to official sources. Missing art or audio is identified rather than inferred.",
     },
     "travel-passport": {
-        "mode": "empty",
-        "description": "A personal record of the places you have visited and experiences you have collected.",
-        "status": "No trips recorded",
-        "empty_title": "Your passport is ready for its first journey",
-        "empty_message": "Visited-place tracking is not enabled yet, so no destinations are recorded in your travel passport.",
+        "mode": "passport",
+        "description": "Track visited places, collect destination stamps, and follow your travel achievements.",
+        "status": "Personal travel passport",
+        "note": "Visits are private to your account. Self-reported visits and valid destination QR check-ins are labeled separately.",
     },
     "smart-trip-intelligence": {
-        "mode": "unavailable",
-        "description": "A workspace for bringing itinerary, timing, budget, and sustainability signals together.",
-        "status": "Trip intelligence not connected",
-        "empty_title": "No trip-analysis engine is configured",
-        "empty_message": "There is no trip history or analysis model connected, so this page does not make personalized predictions.",
+        "mode": "intelligence",
+        "description": "Bring destination services, travel conditions, estimates, safety, and evidence together in one view.",
+        "status": "Destination intelligence",
+        "note": "Select a catalogue destination to load its connected modules. Sample crowd indices and budget estimates are labeled; unsupported or unconfigured data is shown as unavailable, never invented.",
     },
     "restaurants": {
         "mode": "map",
@@ -138,16 +133,15 @@ WORKSPACE_PAGES: dict[str, dict[str, Any]] = {
     "cultural-events": {
         "mode": "map",
         "map_category": "cultural-events",
-        "description": "Find cultural events only when their date, venue, and information source have been verified.",
-        "status": "Verified schedule only",
-        "note": "Festival dates and venues can vary by community and organizer. Only dated, source-linked event records are listed; an annual festival reference is not treated as a scheduled event.",
+        "description": "Preview cultural-event layouts and filtering with clearly disclosed synthetic records.",
+        "status": "Synthetic prototype dataset",
+        "note": "The bundled event CSV is illustrative demo data, not a confirmed or verified public schedule. Recheck official or organiser sources before planning a visit.",
     },
     "my-itineraries": {
-        "mode": "empty",
+        "mode": "itineraries",
         "description": "Review and return to journeys saved to your account.",
-        "status": "No trips saved",
-        "empty_title": "Your saved itineraries will appear here",
-        "empty_message": "The current starter does not yet include a user-specific itinerary save flow.",
+        "status": "Your saved trips",
+        "note": "Saved itinerary drafts are private to your prototype account. AI-assisted drafts are stored only when you choose Save itinerary.",
     },
     "sustainability-dashboard": {
         "mode": "sustainability",

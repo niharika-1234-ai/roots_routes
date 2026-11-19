@@ -110,6 +110,16 @@ def _read_event(
     current_date: date,
 ) -> dict[str, object]:
     record = {key: (row.get(key) or "").strip() for key in REQUIRED_COLUMNS}
+    data_status = (row.get("data_status") or "verified").strip().casefold()
+    verification_note = (row.get("verification_note") or "").strip()
+    if data_status not in {"verified", "synthetic"}:
+        raise CulturalEventDataError(
+            f"The cultural event catalogue has an invalid data status on row {row_number}."
+        )
+    if data_status == "synthetic" and not verification_note:
+        raise CulturalEventDataError(
+            f"The cultural event catalogue requires a disclosure note on row {row_number}."
+        )
     if any(not value for value in record.values()):
         raise CulturalEventDataError(
             f"The cultural event catalogue has an incomplete record on row {row_number}."
@@ -166,6 +176,8 @@ def _read_event(
             "latitude": latitude,
             "longitude": longitude,
             "category_label": CULTURAL_EVENT_CATEGORIES[str(record["category"])],
+            "is_synthetic": data_status == "synthetic",
+            "verification_note": verification_note,
         }
     )
     return record
